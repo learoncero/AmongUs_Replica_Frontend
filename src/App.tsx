@@ -31,24 +31,9 @@ export default function App() {
         }
     }, [stompClient]); // Only run effect App is rendered
 
-    /*useEffect(() => {
-        if(stompClient && !player) {
-            const playerID = nextID + 1;
-            const newPlayer = {
-                id: playerID,
-                username: `Player ${playerID}`,
-                x: 20,
-                y: 20,
-            };
-            setNextID(playerID); // Correctly update nextID
-            setPlayer(newPlayer);
-            stompClient.send('/app/join', {}, JSON.stringify(newPlayer));
-        }
-    }, [stompClient, player, nextID]);*/
-
     useEffect(() => {
         if (stompClient) {
-            const handleKeyDown = (event) => {
+            const handleKeyDown = (event: { code: any; }) => {
                 // Detect arrow key press
                 const keyCode = event.code;
                 let newPosition: { x: number; y: number; };
@@ -69,7 +54,7 @@ export default function App() {
                         return;
                 }
                 // Send position update to server
-                stompClient.send('/app/move', {}, JSON.stringify({ player, newPosition }));
+                stompClient.send('/app/move', {}, JSON.stringify({ id: player.id , newPosition: newPosition }))
             };
 
             window.addEventListener('keydown', handleKeyDown);
@@ -80,18 +65,23 @@ export default function App() {
         }
     }, [stompClient, player]);
 
+    //Todo, update effect as it keeps rendering it, message.body is being printed in console 7x, maybe do set and update
+    //functions outside of useEffect? does it need useEffect?
     useEffect(() => {
         if (stompClient) {
-            stompClient.subscribe('/topic/positionChange', (message) => {
+            stompClient.subscribe('/topic/positionChange', (message: { body: string; }) => {
                 const receivedMessage = JSON.parse(message.body);
-                updatePlayerList(receivedMessage);
+                const playerId = receivedMessage.id;
+                const username = receivedMessage.username;
+                const newPlayerPosition = {id: playerId, username: username, x: receivedMessage.position.x, y: receivedMessage.position.y};
 
                 if (player && receivedMessage.id === player.id) {
-                    setPlayer(receivedMessage);
+                    setPlayer(newPlayerPosition);
+                    updatePlayerList(newPlayerPosition);
                 }
             });
 
-            stompClient.subscribe('/topic/playerJoin', (message) => {
+            stompClient.subscribe('/topic/playerJoin', (message: { body: string; }) => {
                 const receivedMessage = JSON.parse(message.body);
                 updatePlayerList(receivedMessage);
 
@@ -102,21 +92,11 @@ export default function App() {
         }
     }, [stompClient]);
 
-    useEffect(() => {
-        // This code will run after the component re-renders
-        console.log("ID player state: " + player?.id + " Username: " + player?.username + " X: " + player?.x + " Y: " + player?.y);
-
-        // Now you can perform any action that relies on the updated state, such as sending player data to stompClient
-        if (player !== null) {
-            stompClient.send('/app/join', {}, JSON.stringify(player));
-        }
-    }, [player]);
-
     return (
         <div>
 
             <h1>Game</h1>
-            <button onClick={() => joinGame(nextID, player, playerList)}>Join Game</button><br/>
+            <button onClick={() => joinGame(nextID, player)}>Join Game</button><br/>
             <button onClick={() => move('left')}>Move Left</button>
             <button onClick={() => move('up')}>Move Up</button>
             <button onClick={() => move('right')}>Move Right</button>
@@ -124,7 +104,7 @@ export default function App() {
         </div>
     );
 
-    function joinGame(nextID, player, playerList) {
+    function joinGame(nextID: number, player: Player) {
         if(stompClient && player === null) {
             const playerID = nextID + 1;
             const newPlayer = {
@@ -136,24 +116,27 @@ export default function App() {
             console.log("ID new Player: "+ playerID +" Username: "+ newPlayer.username +" X: "+ newPlayer.x +" Y: "+ newPlayer.y)
             setNextID(playerID); // Correctly update nextID
             setPlayer(newPlayer);
+            updatePlayerList(newPlayer);
+            stompClient.send('/app/join', {}, JSON.stringify(newPlayer));
         }
 
     }
 
-    function updatePlayerList (receivedMessage) {
+    function updatePlayerList (updatedPlayer: { id: number; username: string; x: number; y: number; }) {
+
         const updatedPlayerList = [...playerList];
-        const existingPlayerIndex = updatedPlayerList.findIndex(player => player.id === receivedMessage.id);
+        const existingPlayerIndex = updatedPlayerList.findIndex(player => player.id === updatedPlayer.id);
 
         if (existingPlayerIndex !== -1) {
-            updatedPlayerList[existingPlayerIndex] = receivedMessage;
+            updatedPlayerList[existingPlayerIndex] = updatedPlayer;
         } else {
-            updatedPlayerList.push(receivedMessage);
+            updatedPlayerList.push(updatedPlayer);
         }
         setPlayerList(updatedPlayerList);
     }
 
 
-    function move(direction) {
+    function move(direction: string) {
         let deltaX = 0, deltaY = 0;
 
         // Determine the change in position based on the direction
@@ -181,7 +164,7 @@ export default function App() {
         };
 
         // Send the move message
-        stompClient.send('/app/move', {}, JSON.stringify({ player: { id: player.id }, newPosition: newPlayerPosition }));
+        stompClient.send('/app/move', {}, JSON.stringify({id: player.id, newPosition: newPlayerPosition }));
     }
 
 
