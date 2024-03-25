@@ -39,22 +39,20 @@ export default function App() {
                 let newPosition: { x: number; y: number; };
                 switch (keyCode) {
                     case 'ArrowLeft': // Left arrow
-                        newPosition = { x: player.x-1, y: player.y };
+                        move("left");
                         break;
                     case 'ArrowUp': // Up arrow
-                        newPosition = { x: player.x, y: player.y-1 };
+                        move("up");
                         break;
                     case 'ArrowRight': // Right arrow
-                        newPosition = { x: player.x+1, y: player.y};
+                        move("right");
                         break;
                     case 'ArrowDown': // Down arrow
-                        newPosition = { x: player.x, y: player.y+1 };
+                        move("down");
                         break;
                     default:
                         return;
                 }
-                // Send position update to server
-                stompClient.send('/app/move', {}, JSON.stringify({ id: player.id , newPosition: newPosition }))
             };
 
             window.addEventListener('keydown', handleKeyDown);
@@ -73,12 +71,14 @@ export default function App() {
                 const receivedMessage = JSON.parse(message.body);
                 const playerId = receivedMessage.id;
                 const username = receivedMessage.username;
-                const newPlayerPosition = {id: playerId, username: username, x: receivedMessage.position.x, y: receivedMessage.position.y};
-
-                if (player && receivedMessage.id === player.id) {
-                    setPlayer(newPlayerPosition);
-                    updatePlayerList(newPlayerPosition);
-                }
+                console.log("Return message- ID: "+ playerId +" Username: "+ username +" X: "+ receivedMessage.position.x +" Y: "+ receivedMessage.position.y);
+                const newPlayerPositionChange = {id: playerId, username: username, x: receivedMessage.position.x, y: receivedMessage.position.y};
+                updatePlayerAndList(newPlayerPositionChange);
+                /*if (receivedMessage.id === player.id) {
+                    //console.log("setPlayer and updatePlayerList called")
+                    setPlayer(newPlayerPositionChange);
+                    updatePlayerList(newPlayerPositionChange);
+                }*/
             });
 
             stompClient.subscribe('/topic/playerJoin', (message: { body: string; }) => {
@@ -91,6 +91,13 @@ export default function App() {
             });
         }
     }, [stompClient]);
+
+    //for debugging
+    /*useEffect(() => {
+        if (player !== null) {
+            console.log("updated Player State: " + player.x + ", " + player.y);
+        }
+    }, [player]);*/
 
     return (
         <div>
@@ -165,6 +172,11 @@ export default function App() {
 
         // Send the move message
         stompClient.send('/app/move', {}, JSON.stringify({id: player.id, newPosition: newPlayerPosition }));
+    }
+
+    function  updatePlayerAndList(player){
+        setPlayer(player);
+        updatePlayerList(player);
     }
 
 
