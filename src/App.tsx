@@ -41,7 +41,6 @@ export default function App() {
             const handleKeyDown = (event: { code: any; }) => {
                 // Detect arrow key press
                 const keyCode = event.code;
-                let newPosition: { x: number; y: number; };
                 switch (keyCode) {
                     case 'ArrowLeft': // Left arrow
                         move("left");
