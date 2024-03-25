@@ -9,11 +9,16 @@ export type Player = {
     y: number;
 };
 
+export type GameMap = {
+    map: boolean[][];
+}
+
 export default function App() {
     const [nextID, setNextID] = useState(0);
     const [stompClient, setStompClient] = useState(null);
     const [player, setPlayer] = useState<Player | null>(null);
     const [playerList, setPlayerList] = useState<Player[]>([]);
+    const [GameMap, setGameMap] = useState<GameMap | null>(null);
 
     useEffect(() => {
         if (!stompClient) {
@@ -89,9 +94,20 @@ export default function App() {
                     setPlayer(receivedMessage);
                 }
             });
+
+            stompClient.subscribe('/topic/mapinitialiser', (message: { body: string; }) => {
+                console.log("Map Initialiser called");
+                console.log("message.body: "+ message.body);
+                const receivedMessage = JSON.parse(message.body);
+                setGameMapState(receivedMessage);
+            });
         }
     }, [stompClient]);
 
+    if(GameMap !== null) {
+        console.log("GameMap: " + GameMap.map[3][3]);
+        console.log("GameMap: " + GameMap.map[0][0]);
+    }
     //for debugging
     /*useEffect(() => {
         if (player !== null) {
@@ -103,13 +119,21 @@ export default function App() {
         <div>
 
             <h1>Game</h1>
-            <button onClick={() => joinGame(nextID, player)}>Join Game</button><br/>
+            <button onClick={() => joinGame(nextID, player)}>Join Game</button>
+            <button onClick={() => initialiseMap(GameMap)}>Get Map</button>
+            <br/>
             <button onClick={() => move('left')}>Move Left</button>
             <button onClick={() => move('up')}>Move Up</button>
             <button onClick={() => move('right')}>Move Right</button>
             <button onClick={() => move('down')}>Move Down</button>
         </div>
     );
+
+    function initialiseMap(GameMap) {
+        if(stompClient && GameMap === null) {
+            stompClient.send('/app/mapinitialiser', {}, JSON.stringify({}));
+        }
+    }
 
     function joinGame(nextID: number, player: Player) {
         if(stompClient && player === null) {
@@ -177,6 +201,10 @@ export default function App() {
     function  updatePlayerAndList(player){
         setPlayer(player);
         updatePlayerList(player);
+    }
+
+    function setGameMapState(GameMap) {
+        setGameMap(GameMap);
     }
 
 
