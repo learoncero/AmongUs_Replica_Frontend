@@ -12,27 +12,15 @@ export type Player = {
 export default function App() {
     const [nextID, setNextID] = useState(0);
     const [stompClient, setStompClient] = useState(null);
-    const [player, setPlayer] = useState({} as Player);
-    const [playerList, setPlayerList] = useState([]);
+    const [player, setPlayer] = useState<Player | null>(null);
+    const [playerList, setPlayerList] = useState<Player[]>([]);
 
     useEffect(() => {
         if (!stompClient) {
             const socket = new SockJS('http://localhost:5010/ws');
             const client = Stomp.over(socket);
-
             client.connect({}, () => {
                 setStompClient(client);
-
-                const playerID = nextID + 1;
-                const newPlayer = {
-                    id: playerID,
-                    username: `Player ${playerID}`,
-                    x: 20,
-                    y: 20,
-                };
-                setNextID(playerID); // Correctly update nextID
-                setPlayer(newPlayer);
-                client.send('/app/join', {}, JSON.stringify(newPlayer));
             });
 
             return () => {
@@ -41,26 +29,41 @@ export default function App() {
                 }
             };
         }
-    }, [stompClient]); // Only run effect when stompClient changes
+    }, [stompClient]); // Only run effect App is rendered
+
+    /*useEffect(() => {
+        if(stompClient && !player) {
+            const playerID = nextID + 1;
+            const newPlayer = {
+                id: playerID,
+                username: `Player ${playerID}`,
+                x: 20,
+                y: 20,
+            };
+            setNextID(playerID); // Correctly update nextID
+            setPlayer(newPlayer);
+            stompClient.send('/app/join', {}, JSON.stringify(newPlayer));
+        }
+    }, [stompClient, player, nextID]);*/
 
     useEffect(() => {
         if (stompClient) {
             const handleKeyDown = (event) => {
                 // Detect arrow key press
                 const keyCode = event.code;
-                let newPosition;
+                let newPosition: { x: number; y: number; };
                 switch (keyCode) {
                     case 'ArrowLeft': // Left arrow
-                        newPosition = { x: -1, y: 0 };
+                        newPosition = { x: player.x-1, y: player.y };
                         break;
                     case 'ArrowUp': // Up arrow
-                        newPosition = { x: 0, y: -1 };
+                        newPosition = { x: player.x, y: player.y-1 };
                         break;
                     case 'ArrowRight': // Right arrow
-                        newPosition = { x: 1, y: 0 };
+                        newPosition = { x: player.x+1, y: player.y};
                         break;
                     case 'ArrowDown': // Down arrow
-                        newPosition = { x: 0, y: 1 };
+                        newPosition = { x: player.x, y: player.y+1 };
                         break;
                     default:
                         return;
@@ -99,7 +102,45 @@ export default function App() {
         }
     }, [stompClient]);
 
-    const updatePlayerList = (receivedMessage) => {
+    useEffect(() => {
+        // This code will run after the component re-renders
+        console.log("ID player state: " + player?.id + " Username: " + player?.username + " X: " + player?.x + " Y: " + player?.y);
+
+        // Now you can perform any action that relies on the updated state, such as sending player data to stompClient
+        if (player !== null) {
+            stompClient.send('/app/join', {}, JSON.stringify(player));
+        }
+    }, [player]);
+
+    return (
+        <div>
+
+            <h1>Game</h1>
+            <button onClick={() => joinGame(nextID, player, playerList)}>Join Game</button><br/>
+            <button onClick={() => move('left')}>Move Left</button>
+            <button onClick={() => move('up')}>Move Up</button>
+            <button onClick={() => move('right')}>Move Right</button>
+            <button onClick={() => move('down')}>Move Down</button>
+        </div>
+    );
+
+    function joinGame(nextID, player, playerList) {
+        if(stompClient && player === null) {
+            const playerID = nextID + 1;
+            const newPlayer = {
+                id: playerID,
+                username: `Player ${playerID}`,
+                x: 20,
+                y: 20,
+            };
+            console.log("ID new Player: "+ playerID +" Username: "+ newPlayer.username +" X: "+ newPlayer.x +" Y: "+ newPlayer.y)
+            setNextID(playerID); // Correctly update nextID
+            setPlayer(newPlayer);
+        }
+
+    }
+
+    function updatePlayerList (receivedMessage) {
         const updatedPlayerList = [...playerList];
         const existingPlayerIndex = updatedPlayerList.findIndex(player => player.id === receivedMessage.id);
 
@@ -108,9 +149,9 @@ export default function App() {
         } else {
             updatedPlayerList.push(receivedMessage);
         }
-
         setPlayerList(updatedPlayerList);
-    };
+    }
+
 
     function move(direction) {
         let deltaX = 0, deltaY = 0;
@@ -143,13 +184,5 @@ export default function App() {
         stompClient.send('/app/move', {}, JSON.stringify({ player: { id: player.id }, newPosition: newPlayerPosition }));
     }
 
-    return (
-        <div>
-            <h1>Game</h1>
-            <button onClick={() => move('left')}>Move Left</button>
-            <button onClick={() => move('up')}>Move Up</button>
-            <button onClick={() => move('right')}>Move Right</button>
-            <button onClick={() => move('down')}>Move Down</button>
-        </div>
-    );
+
 }
