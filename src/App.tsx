@@ -1,9 +1,8 @@
 import React, {useState, useEffect} from 'react';
 import Stomp from 'stompjs';
 import SockJS from 'sockjs-client';
-import Player from './Player';
+import Player from './PlayerIcon';
 import MapDisplay from "./MapDisplay";
-import PlayerIcon from "./Player";
 
 export type Player = {
     id: number;
