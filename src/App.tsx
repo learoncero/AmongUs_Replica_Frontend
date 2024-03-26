@@ -138,7 +138,7 @@ export default function App() {
             stompClient.send('/app/mapinitialiser', {}, JSON.stringify({}));
         }
     }
-
+    //todo, player creation be done in backend. with random x,y values
     function joinGame(nextID: number, player: Player) {
         if(stompClient && player === null) {
             const playerID = nextID + 1;
@@ -146,7 +146,7 @@ export default function App() {
                 id: playerID,
                 username: `Player ${playerID}`,
                 x: 6,
-                y: 2,
+                y: 9,
             };
             console.log("ID new Player: "+ playerID +" Username: "+ newPlayer.username +" X: "+ newPlayer.x +" Y: "+ newPlayer.y)
             setNextID(playerID); // Correctly update nextID
