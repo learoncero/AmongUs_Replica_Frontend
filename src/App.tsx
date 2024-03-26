@@ -1,6 +1,9 @@
 import React, {useState, useEffect} from 'react';
 import Stomp from 'stompjs';
 import SockJS from 'sockjs-client';
+import Player from './Player';
+import MapDisplay from "./MapDisplay";
+import PlayerIcon from "./Player";
 
 export type Player = {
     id: number;
@@ -78,16 +81,17 @@ export default function App() {
                 console.log("Return message- ID: "+ playerId +" Username: "+ username +" X: "+ receivedMessage.position.x +" Y: "+ receivedMessage.position.y);
                 const newPlayerPositionChange = {id: playerId, username: username, x: receivedMessage.position.x, y: receivedMessage.position.y};
                 updatePlayerAndList(newPlayerPositionChange);
-                /*if (receivedMessage.id === player.id) {
-                    //console.log("setPlayer and updatePlayerList called")
-                    setPlayer(newPlayerPositionChange);
-                    updatePlayerList(newPlayerPositionChange);
-                }*/
+
             });
 
             stompClient.subscribe('/topic/playerJoin', (message: { body: string; }) => {
                 const receivedMessage = JSON.parse(message.body);
-                updatePlayerList(receivedMessage);
+                const playerId = receivedMessage.id;
+                const username = receivedMessage.username;
+                const posX = receivedMessage.position.x;
+                const posY = receivedMessage.position.y;
+                const newJoinedPlayer = {id: playerId, username: username, x: posX, y: posY};
+                updatePlayerList(newJoinedPlayer);
 
                 if (player && receivedMessage.id === player.id) {
                     setPlayer(receivedMessage);
@@ -125,11 +129,13 @@ export default function App() {
             <button onClick={() => move('up')}>Move Up</button>
             <button onClick={() => move('right')}>Move Right</button>
             <button onClick={() => move('down')}>Move Down</button>
+
+            <MapDisplay Map={GameMap} playerList={playerList}/>
         </div>
     );
 
     function initialiseMap(GameMap) {
-        if(stompClient && GameMap === null) {
+        if (stompClient && GameMap === null) {
             stompClient.send('/app/mapinitialiser', {}, JSON.stringify({}));
         }
     }
@@ -140,8 +146,8 @@ export default function App() {
             const newPlayer = {
                 id: playerID,
                 username: `Player ${playerID}`,
-                x: 20,
-                y: 20,
+                x: 6,
+                y: 2,
             };
             console.log("ID new Player: "+ playerID +" Username: "+ newPlayer.username +" X: "+ newPlayer.x +" Y: "+ newPlayer.y)
             setNextID(playerID); // Correctly update nextID
@@ -197,12 +203,12 @@ export default function App() {
         stompClient.send('/app/move', {}, JSON.stringify({id: player.id, newPosition: newPlayerPosition }));
     }
 
-    function  updatePlayerAndList(player){
+    function  updatePlayerAndList(player: Player){
         setPlayer(player);
         updatePlayerList(player);
     }
 
-    function setGameMapState(GameMap) {
+    function setGameMapState(GameMap: GameMap){
         setGameMap(GameMap);
     }
 
