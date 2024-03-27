@@ -145,7 +145,7 @@ export default function App() {
             const newPlayer = {
                 id: playerID,
                 username: `Player ${playerID}`,
-                x: 6,
+                x: 7,
                 y: 9,
             };
             console.log("ID new Player: "+ playerID +" Username: "+ newPlayer.username +" X: "+ newPlayer.x +" Y: "+ newPlayer.y)
