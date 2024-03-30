@@ -1,4 +1,4 @@
-import { Player } from './App';
+import { Player } from './Game';
 
 type Props = {
     player: Player;

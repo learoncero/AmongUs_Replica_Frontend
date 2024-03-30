@@ -1,4 +1,4 @@
-import {GameMap, Player} from './App';
+import {GameMap, Player} from './Game';
 import './MapDisplay.css';
 
 
