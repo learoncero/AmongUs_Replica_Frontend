@@ -11,7 +11,7 @@ export default function ChooseGameMode() {
           CREATE GAME
         </Link>
         <Link
-          to=""
+          to="/joinGame"
           className="flex-1 bg-transparent border border-white hover:border-black hover:bg-cyan-500 text-white font-bold py-3 rounded-lg text-xl text-center"
         >
           JOIN GAME
