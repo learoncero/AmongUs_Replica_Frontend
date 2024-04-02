@@ -1,14 +1,47 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Game } from "../App";
+import { Game, Player } from "../App";
+import SockJS from "sockjs-client";
+import Stomp from "stompjs";
 
 export default function Lobby() {
   const { gameCode } = useParams();
   const [game, setGame] = useState<Game | null>(null);
+  const [stompClient, setStompClient] = useState(null);
+  const [playerList, setPlayerList] = useState<Player[]>([]);
 
   useEffect(() => {
-    console.log("useEffect triggered");
+    if (!stompClient) {
+      const socket = new SockJS("http://localhost:5010/ws");
+      const client = Stomp.over(socket);
+      client.connect({}, () => {
+        setStompClient(client);
+      });
 
+      return () => {
+        if (stompClient) {
+          stompClient.disconnect();
+        }
+      };
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!stompClient) return;
+
+    stompClient.subscribe(
+      "/topic/playerJoined",
+      (message: { body: string }) => {
+        const receivedMessage = JSON.parse(message.body);
+        setGame(receivedMessage);
+        setPlayerList(receivedMessage.players);
+        console.log("Received message:", receivedMessage);
+        console.log("Received players:", receivedMessage.players);
+      }
+    );
+  }, []);
+
+  useEffect(() => {
     const apiUrl = `http://localhost:5010/api/game/${gameCode}`;
 
     fetch(apiUrl)
@@ -22,6 +55,7 @@ export default function Lobby() {
       })
       .then((gameData) => {
         setGame(gameData);
+        setPlayerList(gameData.players);
       })
       .catch((error) => {
         console.error("Error fetching game data:", error);
@@ -38,25 +72,25 @@ export default function Lobby() {
       .catch((error) => console.error("Error starting game:", error));
   }
 
-  const isGameReadyToStart = game?.numberOfPlayers === game?.players.length;
+  const isGameReadyToStart = game?.numberOfPlayers === playerList.length;
 
   return (
     <div className="min-h-screen bg-black flex justify-center pl-5 items-center gap-10">
       <div className="max-w-xl text-white p-8 rounded-lg border-white border flex flex-col grow h-96">
         <div>
           <h2 className="text-3xl font-bold mb-4 text-white">
-            Players ({game?.players.length}/{game?.numberOfPlayers})
+            Players ({playerList.length}/{game?.numberOfPlayers})
           </h2>
           <hr className="border-white mb-4" />
           {game && (
             <>
-              {game.numberOfPlayers === game.players.length ? (
+              {game.numberOfPlayers === playerList.length ? (
                 <p className="pb-4">You can start the game!</p>
               ) : (
                 <p className="pb-4">Waiting for players...</p>
               )}
               <ul className="list-none p-0">
-                {game.players.map((player) => (
+                {playerList.map((player) => (
                   <li
                     key={player.id}
                     className="mb-2 px-4 py-2 bg-gray-800 rounded-lg"
