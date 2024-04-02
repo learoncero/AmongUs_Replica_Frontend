@@ -3,6 +3,10 @@ import Stomp from 'stompjs';
 import SockJS from 'sockjs-client';
 import Player from './PlayerIcon';
 import MapDisplay from "./MapDisplay";
+import './MiniMap.css';
+import MiniMap from "./MiniMap";
+import MapButton from './MapButton';
+
 
 export type Player = {
     id: number;
@@ -21,6 +25,10 @@ export default function Game() {
     const [player, setPlayer] = useState<Player | null>(null);
     const [playerList, setPlayerList] = useState<Player[]>([]);
     const [GameMap, setGameMap] = useState<GameMap | null>(null);
+    const [showMiniMap, setShowMiniMap] = useState(false);
+    const handleToggleMiniMap = () => {
+        setShowMiniMap(!showMiniMap);
+    };
 
     useEffect(() => {
         if (!stompClient) {
@@ -39,11 +47,16 @@ export default function Game() {
     }, [stompClient]); // Only run effect App is rendered
 
     useEffect(() => {
-        if (stompClient) {
-            const handleKeyDown = (event: { code: any; }) => {
-                // Detect arrow key press
-                const keyCode = event.code;
-                switch (keyCode) {
+        const handleKeyDown = (event) => {
+            if(showMiniMap) {
+                // Ignores everything except m
+                if (event.key !== 'm') {
+                    event.preventDefault();
+                    return; //prevents movement
+                }
+            } else {
+
+                switch(event.key) {
                     case 'ArrowLeft': // Left arrow
                         move("left");
                         break;
@@ -59,15 +72,18 @@ export default function Game() {
                     default:
                         return;
                 }
-            };
+            }
+        };
 
-            window.addEventListener('keydown', handleKeyDown);
 
-            return () => {
-                window.removeEventListener('keydown', handleKeyDown);
-            };
-        }
-    }, [stompClient, player]);
+        window.addEventListener('keydown', handleKeyDown);
+
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [showMiniMap, player, stompClient]);
+
 
     //Todo, update effect as it keeps rendering it, message.body is being printed in console 7x, maybe do set and update
     //functions outside of useEffect? does it need useEffect?
@@ -106,6 +122,20 @@ export default function Game() {
         }
     }, [stompClient]);
 
+    useEffect(() => {
+        const toggleMiniMap = (event: KeyboardEvent) => {
+            if (event.key === 'm' || event.key === 'M') {
+                setShowMiniMap(!showMiniMap);
+            }
+        };
+
+        window.addEventListener('keydown', toggleMiniMap);
+
+        return () => {
+            window.removeEventListener('keydown', toggleMiniMap);
+        };
+    }, [showMiniMap]);
+
     if(GameMap !== null) {
         console.log("GameMap: " + GameMap.map[3][3]);
         console.log("GameMap: " + GameMap.map[0][0]);
@@ -117,13 +147,23 @@ export default function Game() {
         }
     }, [player]);*/
 
+    //Todo, e.stopPropagation should prevent the Minimap to close if you klick on it
     return (
         <div className='bg-black min-h-screen py-6 pl-6'>
             <h1 className="mb-7 text-4xl font-extrabold leading-none tracking-tight text-white md:text-5xl lg:text-6xl">Cloak and Dagger (CnD)</h1>
             <div className='text-white font-bold pb-6'>
                 <button className="bg-transparent border border-white hover:border-black hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-lg mr-4" onClick={() => joinGame(nextID, player)}>Join Game</button>
-                <button className="bg-transparent border border-white hover:border-black hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-lg" onClick={() => initialiseMap(GameMap)}>Get Map</button>
+                <button className="bg-transparent border border-white hover:border-black hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-lg mr-4" onClick={() => initialiseMap(GameMap)}>Get Map</button>
+                <MapButton onClick={handleToggleMiniMap} label="Show MiniMap" />
             </div>
+            {showMiniMap && (
+                <div className="MiniMap-overlay" onClick={() => setShowMiniMap(false)}>
+                    <div className="MiniMap-content" onClick={e => e.stopPropagation()}>
+                        <MiniMap Map={GameMap} playerList={playerList} closeMiniMap={() => setShowMiniMap(false)}  />
+                    </div>
+                </div>
+            )}
+
             <MapDisplay Map={GameMap} playerList={playerList}/>
         </div>
     );
