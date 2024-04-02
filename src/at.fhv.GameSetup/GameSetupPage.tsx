@@ -12,6 +12,9 @@ export default function GameSetupPage() {
 
   useEffect(() => {
     if (username && numPlayers && numImpostors >= 0 && map) {
+      if (numImpostors > numPlayers / 2) {
+        setNumImpostors(Math.floor(numPlayers / 2));
+      }
       setButtonDisabled(false);
     } else {
       setButtonDisabled(true);
