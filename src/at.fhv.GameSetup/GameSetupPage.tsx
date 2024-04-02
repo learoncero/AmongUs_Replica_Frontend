@@ -14,6 +14,9 @@ export default function GameSetupPage() {
   useEffect(() => {
     // Check if all required fields are filled in
     if (username && numPlayers && numImpostors >= 0 && map) {
+      if (numImpostors > numPlayers / 2) {
+        setNumImpostors(Math.floor(numPlayers / 2));
+      }
       setButtonDisabled(false);
     } else {
       setButtonDisabled(true);
