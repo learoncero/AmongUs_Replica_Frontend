@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Player } from "../App";
 
 export default function GameSetupPage() {
@@ -12,6 +12,9 @@ export default function GameSetupPage() {
 
   useEffect(() => {
     if (username && numPlayers && numImpostors >= 0 && map) {
+      if (numImpostors > numPlayers / 2) {
+        setNumImpostors(Math.floor(numPlayers / 2));
+      }
       setButtonDisabled(false);
     } else {
       setButtonDisabled(true);
@@ -62,6 +65,9 @@ export default function GameSetupPage() {
   return (
     <div className="min-h-screen bg-black flex justify-center pl-5 items-center">
       <div className="max-w-md text-white p-8 rounded-lg border-white border">
+        <Link to="/chooseGameMode" className="text-white text-lg mb-4 block">
+          Back
+        </Link>
         <h2 className="text-3xl font-bold mb-4 text-white">Game Setup</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
