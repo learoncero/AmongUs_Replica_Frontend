@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import SockJS from "sockjs-client";
-import Stomp from "stompjs";
+import { Player } from "../App";
 
 export default function GameSetupPage() {
   const navigate = useNavigate();
@@ -12,7 +11,6 @@ export default function GameSetupPage() {
   const [buttonDisabled, setButtonDisabled] = useState(true);
 
   useEffect(() => {
-    // Check if all required fields are filled in
     if (username && numPlayers && numImpostors >= 0 && map) {
       setButtonDisabled(false);
     } else {
@@ -24,7 +22,14 @@ export default function GameSetupPage() {
     event.preventDefault();
 
     const gameData = {
-      username: username,
+      player: {
+        id: 1,
+        username: username,
+        position: {
+          x: 7,
+          y: 9,
+        },
+      },
       numberOfPlayers: numPlayers,
       numberOfImpostors: numImpostors,
       map: map,
