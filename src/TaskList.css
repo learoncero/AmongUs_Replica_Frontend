@@ -1,0 +1,37 @@
+.tasksList {
+    background-color: black;
+    color: #ffffff;
+    border: 1px solid #646464;
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
+    border-radius: 8px;
+    padding: 16px;
+    font-family: 'Arial', sans-serif;
+    font-size: 1rem;
+    width: 200px;
+
+    z-index: 10;
+    margin-bottom: 20px;
+}
+
+.tasksList h2 {
+    font-size: 1.2rem;
+    margin-bottom: 12px;
+    text-align: left;
+}
+
+.tasksList ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+.tasksList li {
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 8px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+
+
+}
+
+
