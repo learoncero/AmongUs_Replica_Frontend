@@ -1,7 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-export default function GameSetupPage() {
+type Props = {
+  nextPlayerID: number;
+  incrementNextPlayerID: () => void;
+};
+
+export default function GameSetupPage({
+  nextPlayerID,
+  incrementNextPlayerID,
+}: Props) {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [numPlayers, setNumPlayers] = useState(1);
@@ -25,7 +33,7 @@ export default function GameSetupPage() {
 
     const gameData = {
       player: {
-        id: 1,
+        id: nextPlayerID,
         username: username,
         position: {
           x: 7,
@@ -36,6 +44,8 @@ export default function GameSetupPage() {
       numberOfImpostors: numImpostors,
       map: map,
     };
+
+    incrementNextPlayerID();
 
     console.log("Creating game with data:", gameData);
 

@@ -33,13 +33,11 @@ export default function Lobby() {
       "/topic/playerJoined",
       (message: { body: string }) => {
         const receivedMessage = JSON.parse(message.body);
-        setGame(receivedMessage);
-        setPlayerList(receivedMessage.players);
-        console.log("Received message:", receivedMessage);
-        console.log("Received players:", receivedMessage.players);
+        setGame(receivedMessage.body);
+        setPlayerList(receivedMessage.body.players); // Update playerList state
       }
     );
-  }, []);
+  }, [stompClient]);
 
   useEffect(() => {
     const apiUrl = `http://localhost:5010/api/game/${gameCode}`;
