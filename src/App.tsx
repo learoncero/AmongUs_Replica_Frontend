@@ -3,6 +3,10 @@ import Stomp from 'stompjs';
 import SockJS from 'sockjs-client';
 import Player from './PlayerIcon';
 import MapDisplay from "./MapDisplay";
+import './MiniMap.css';
+import MiniMap from "./MiniMap";
+import MapButton from './MapButton';
+import TasksList from './TaskList';
 
 export type Player = {
     id: number;
@@ -21,6 +25,10 @@ export default function App() {
     const [player, setPlayer] = useState<Player | null>(null);
     const [playerList, setPlayerList] = useState<Player[]>([]);
     const [GameMap, setGameMap] = useState<GameMap | null>(null);
+    const [showMiniMap, setShowMiniMap] = useState(false);
+    const handleToggleMiniMap = () => {
+        setShowMiniMap(!showMiniMap);
+    };
 
     useEffect(() => {
         if (!stompClient) {
@@ -39,11 +47,16 @@ export default function App() {
     }, [stompClient]); // Only run effect App is rendered
 
     useEffect(() => {
-        if (stompClient) {
-            const handleKeyDown = (event: { code: any; }) => {
-                // Detect arrow key press
-                const keyCode = event.code;
-                switch (keyCode) {
+        const handleKeyDown = (event) => {
+            if(showMiniMap) {
+                // Ignores everything except m
+                if (event.key !== 'm') {
+                    event.preventDefault();
+                    return; //prevents movement
+                }
+            } else {
+
+                switch(event.key) {
                     case 'ArrowLeft': // Left arrow
                         move("left");
                         break;
@@ -59,15 +72,17 @@ export default function App() {
                     default:
                         return;
                 }
-            };
+            }
+        };
 
-            window.addEventListener('keydown', handleKeyDown);
 
-            return () => {
-                window.removeEventListener('keydown', handleKeyDown);
-            };
-        }
-    }, [stompClient, player]);
+        window.addEventListener('keydown', handleKeyDown);
+
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [showMiniMap, player, stompClient]);
 
     //Todo, update effect as it keeps rendering it, message.body is being printed in console 7x, maybe do set and update
     //functions outside of useEffect? does it need useEffect?
@@ -106,6 +121,20 @@ export default function App() {
         }
     }, [stompClient]);
 
+    useEffect(() => {
+        const toggleMiniMap = (event: KeyboardEvent) => {
+            if (event.key === 'm' || event.key === 'M') {
+                setShowMiniMap(!showMiniMap);
+            }
+        };
+
+        window.addEventListener('keydown', toggleMiniMap);
+
+        return () => {
+            window.removeEventListener('keydown', toggleMiniMap);
+        };
+    }, [showMiniMap]);
+
     if(GameMap !== null) {
         console.log("GameMap: " + GameMap.map[3][3]);
         console.log("GameMap: " + GameMap.map[0][0]);
@@ -128,7 +157,16 @@ export default function App() {
             <button onClick={() => move('up')}>Move Up</button>
             <button onClick={() => move('right')}>Move Right</button>
             <button onClick={() => move('down')}>Move Down</button>
+            <MapButton onClick={handleToggleMiniMap} label="Show MiniMap" />
+            {showMiniMap && (
+                <div className="MiniMap-overlay" onClick={() => setShowMiniMap(false)}>
+                    <TasksList />
+                    <div className="MiniMap-content" onClick={e => e.stopPropagation()}>
+                        <MiniMap Map={GameMap} playerList={playerList} closeMiniMap={() => setShowMiniMap(false)}  />
 
+                    </div>
+                </div>
+            )}
             <MapDisplay Map={GameMap} playerList={playerList}/>
         </div>
     );
