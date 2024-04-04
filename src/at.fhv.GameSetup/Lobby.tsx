@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import {useEffect, useState} from "react";
 import { useParams, useNavigate} from "react-router-dom";
 import { Game, Player } from "../App";
 import SockJS from "sockjs-client";
@@ -6,17 +6,33 @@ import Stomp from "stompjs";
 
 type Props = {
   game: Game;
-  setGame: (game: Game) => void;
-  stompClient: Stomp.Client;
-  setStompClient: (stompClient: Stomp.Client) => void;
+  onCreationSetGame: (game: Game) => void;
+  playerList: Player[];
+  onChangeUpdatePlayerList: (playerList: Array<Player>) => void;
 };
 
-export default function Lobby({game, setGame, stompClient, setStompClient}: Props) {
+export default function Lobby({game, onCreationSetGame, playerList, onChangeUpdatePlayerList}: Props) {
+  const [stompClient, setStompClient] = useState(null);
   const navigate = useNavigate();
   const { gameCode } = useParams();
-  const [playerList, setPlayerList] = useState<Player[]>([]);
 
   useEffect(() => {
+    if (!stompClient) {
+      const socket = new SockJS("http://localhost:5010/ws");
+      const client = Stomp.over(socket);
+      client.connect({}, () => {
+        setStompClient(client);
+      });
+
+      return () => {
+        if(stompClient) {
+          stompClient.disconnect();
+        }
+      };
+    }
+  }, []);
+
+  /*useEffect(() => {
     if (!stompClient) {
       const socket = new SockJS("http://localhost:5010/ws");
       const client = Stomp.over(socket);
@@ -30,7 +46,7 @@ export default function Lobby({game, setGame, stompClient, setStompClient}: Prop
         }
       };
     }
-  }, []);
+  }, [setStompClient, stompClient]);*/
 
   useEffect(() => {
     if (!stompClient) return;
@@ -39,8 +55,8 @@ export default function Lobby({game, setGame, stompClient, setStompClient}: Prop
       "/topic/playerJoined",
       (message: { body: string }) => {
         const receivedMessage = JSON.parse(message.body);
-        setGame(receivedMessage.body);
-        setPlayerList(receivedMessage.body.players); // Update playerList state
+        onCreationSetGame(receivedMessage.body);
+        onChangeUpdatePlayerList(receivedMessage.body.players); // Update playerList state
       }
     );
   }, [stompClient]);
@@ -58,13 +74,15 @@ export default function Lobby({game, setGame, stompClient, setStompClient}: Prop
         return response.json();
       })
       .then((gameData) => {
-        setGame(gameData);
-        setPlayerList(gameData.players);
+        onCreationSetGame(gameData);
+        onChangeUpdatePlayerList(gameData.players);
+        console.log("Game data fetched:", gameData);
+        console.log("PlayerData: " + gameData.players);
       })
       .catch((error) => {
         console.error("Error fetching game data:", error);
       });
-  }, [gameCode, setGame]);
+  }, [gameCode, onCreationSetGame]);
 
   function handleStartGame(event) {
     event.preventDefault();
@@ -77,6 +95,7 @@ export default function Lobby({game, setGame, stompClient, setStompClient}: Prop
       console.log("sending game to backend...");
       stompClient.send(`/app/${gameCode}/play`, {}, JSON.stringify(game));
       navigate(`/${game.gameCode}/play`);
+      console.log("Start Game button handler: Game sent to backend!" + game);
     }
   }
   const isGameReadyToStart = game?.numberOfPlayers === game?.players.length;
