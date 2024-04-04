@@ -1,10 +1,19 @@
-import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { Game } from "../App";
+import { useEffect} from "react";
+import { useParams, useNavigate} from "react-router-dom";
+import SockJS from "sockjs-client";
+import Stomp from "stompjs";
+import {Game} from "../App";
 
-export default function Lobby() {
+type Props = {
+  game: Game;
+  setGame: (game: Game) => void;
+  stompClient: Stomp.Client;
+  setStompClient: (stompClient: Stomp.Client) => void;
+};
+
+export default function Lobby({game, setGame, stompClient, setStompClient}: Props) {
+  const navigate = useNavigate();
   const { gameCode } = useParams();
-  const [game, setGame] = useState<Game | null>(null);
 
   useEffect(() => {
     console.log("useEffect triggered");
@@ -26,18 +35,37 @@ export default function Lobby() {
       .catch((error) => {
         console.error("Error fetching game data:", error);
       });
-  }, []);
+  }, [gameCode, setGame]);
 
-  function handleStartGame() {
-    fetch(`/api/game/${gameCode}/start`, { method: "POST" })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Failed to start game");
-        }
-      })
-      .catch((error) => console.error("Error starting game:", error));
+  function handleStartGame(event) {
+    event.preventDefault();
+    console.log("Starting game... Data:", game);
+
+      if (!stompClient) {
+          const socket = new SockJS("http://localhost:5010/ws");
+          const client = Stomp.over(socket);
+          client.connect({}, () => {
+              setStompClient(client);
+          });
+          console.log("Game connection established upon pressing StartGame in Lobby");
+      }
   }
 
+    useEffect(() => {
+        console.log("useEffect triggered: StompClient is set.");
+        if(stompClient){
+            console.log("Game being sent: ", game);
+            sendGameToServerAndGoToGame(game);
+        }
+    }, [stompClient]);
+
+  function sendGameToServerAndGoToGame(game: Game) {
+    if (stompClient) {
+      console.log("sending game to backend...");
+      stompClient.send(`/app/${gameCode}/play`, {}, JSON.stringify(game));
+      navigate(`/${game.gameCode}/play`);
+    }
+  }
   const isGameReadyToStart = game?.numberOfPlayers === game?.players.length;
 
   return (
