@@ -24,15 +24,23 @@ export type Player = {
 
 export default function App() {
   const [nextPlayerID, setNextPlayerID] = useState(1);
-  const [stompClient, setStompClient] = useState(null);
   const [game, setGame] = useState<Game | null>(null);
+  const [playerList, setPlayerList] = useState<Player[]>([]);
 
   function incrementNextPlayerID() {
     setNextPlayerID(nextPlayerID + 1);
   }
 
   console.log("nextPlayerID", nextPlayerID);
-  
+  function onChangeUpdatePlayerList(currentPlayerList: Player[]) {
+      console.log("onChangeUpdatePlayerList in App is called");
+      setPlayerList(currentPlayerList);
+  }
+
+  function onCreationSetGame(gameCreated: Game) {
+      setGame(gameCreated);
+    }
+
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
@@ -55,8 +63,21 @@ export default function App() {
           />
         }
       />
-      <Route path="/lobby/:gameCode" element={<Lobby game={game} setGame={setGame} stompClient={stompClient} setStompClient={setStompClient}/>} />
-      <Route path="/:gamecode/play" element={<PlayGame game={game} stompClient={stompClient}/>} />
+      <Route
+        path="/lobby/:gameCode"
+        element={
+          <Lobby
+            game={game}
+            onCreationSetGame={onCreationSetGame}
+            playerList={playerList}
+            onChangeUpdatePlayerList={onChangeUpdatePlayerList}/>} />
+      <Route
+        path="/:gamecode/play"
+        element={
+          <PlayGame
+            game={game}
+            playerList={playerList}
+            onChangeUpdatePlayerList={onChangeUpdatePlayerList}/>} />
     </Routes>
   );
 }
