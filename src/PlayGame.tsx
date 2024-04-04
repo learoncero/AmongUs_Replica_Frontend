@@ -59,7 +59,7 @@ export function PlayGame ({game, playerList, onChangeUpdatePlayerList}:Props) {
                     updatePlayerInList(newPlayerPositionChange);
                 }
             );
-        }console.log("After setPlayerList:", playerList);
+        }console.log("After updatePlayerInList is called:", playerList);
     }, [stompClient]);
 
     useEffect(() => {
@@ -67,7 +67,7 @@ export function PlayGame ({game, playerList, onChangeUpdatePlayerList}:Props) {
     }, [playerList]);
 
     console.log("PlayGame rendered");
-    console.log("After setPlayerList:", playerList);
+    console.log("After Rendering PlayerList is:", playerList);
     //this next log prints the old state so playerList in game.players is not updated
     console.log("Game in PlayGame: GameCode: "+game.gameCode + "Player1 username: " + game.players.at(0).username + "Position X, Y: "+game.players.at(0).position.x+", "+game.players.at(0).position.y);
 
@@ -150,7 +150,6 @@ export function PlayGame ({game, playerList, onChangeUpdatePlayerList}:Props) {
             for (const p of playerList){
                 console.log("Move Function playerList.at(playerIndex) User: " + p.username + " at position: " + p.position.x + ", " + p.position.y);
             }
-            console.log("Move Function playerList.at(playerIndex).position.x: "+playerList.at(playerIndex).position.x);
             const newPlayerPosition = {
                 x: playerList.at(playerIndex).position.x + deltaX,
 
