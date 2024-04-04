@@ -3,32 +3,35 @@ import LandingPage from "./at.fhv.GameSetup/LandingPage";
 import ChooseGameMode from "./at.fhv.GameSetup/ChooseGameMode";
 import GameSetupPage from "./at.fhv.GameSetup/GameSetupPage";
 import Lobby from "./at.fhv.GameSetup/Lobby";
-import Game from "./Game";
 import JoinGame from "./at.fhv.GameSetup/JoinGame";
+import {useState} from "react";
+import {PlayGame} from "./PlayGame";
 
 export type Game = {
   gameCode: string;
   numberOfPlayers: number;
   numberOfImpostors: number;
-  map: string;
+  map: boolean[][];
   players: Player[];
+  gameID: number;
 };
 
 export type Player = {
   id: number;
   username: string;
-  x: number;
-  y: number;
+  position: {x: number, y: number};
 };
 
 export default function App() {
+  const [stompClient, setStompClient] = useState(null);
+  const [game, setGame] = useState<Game | null>(null);
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/chooseGameMode" element={<ChooseGameMode />} />
       <Route path="/gameSetup" element={<GameSetupPage />} />
-      <Route path="/lobby/:gameCode" element={<Lobby />} />
-      <Route path="/game" element={<Game />} />
+      <Route path="/lobby/:gameCode" element={<Lobby game={game} setGame={setGame} stompClient={stompClient} setStompClient={setStompClient}/>} />
+      <Route path="/:gamecode/play" element={<PlayGame game={game} stompClient={stompClient}/>} />
       <Route path="/joinGame" element={<JoinGame />} />
     </Routes>
   );
