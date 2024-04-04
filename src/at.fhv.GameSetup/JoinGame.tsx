@@ -47,7 +47,7 @@ export default function JoinGame({
         id: nextPlayerID,
         username: playerName,
         position: {
-          x: 7,
+          x: 10,
           y: 9,
         },
         gameCode: gameCode,
