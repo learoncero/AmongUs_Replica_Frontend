@@ -36,7 +36,7 @@ export default function GameSetupPage({
         id: nextPlayerID,
         username: username,
         position: {
-          x: 7,
+          x: 9,
           y: 9,
         },
       },
