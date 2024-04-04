@@ -1,28 +1,29 @@
-import {GameMap, Player} from './Game';
+import {Player} from './App';
 import './MapDisplay.css';
 
 
 type Props = {
-    Map: GameMap;
+    map: boolean[][];
     playerList: Player[];
 };
 
 
-export default function MapDisplay({Map, playerList}: Props) {
+export default function MapDisplay({map, playerList}: Props) {
 
-    if(!Map) {
+    if(!map) {
         return <div>Loading Map...</div>;
     }
 
-    console.log("PlayerList in MapDisplay: " + playerList[0].x + ", " + playerList[0].y);
+    //console.log("PlayerList in MapDisplay: " + playerList[0].username + ", " + playerList[0].position.y);
 
+    //console.log("Map data:", map);
     return (
         <div className="MapDisplay-map-container">
-            {Map.map.map((row, rowIndex) => (
+            {map.map((row, rowIndex) => (
                 <div key={rowIndex} className="MapDisplay-row">
                     {row.map((cell, cellIndex) => (
                         <div key={cellIndex} className={`MapDisplay-cell ${cell ? 'walkable' : 'obstacle'} ${playerList &&
-                            playerList.some((player) => player.x === cellIndex && player.y === rowIndex) ? 'player' :''} '}`}/>
+                            playerList.some((player) => player.position.x === cellIndex && player.position.y === rowIndex) ? 'player' :''} '}`}/>
                     ))}
                 </div>
             ))}
