@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Player } from "../App";
 
 export default function GameSetupPage() {
   const navigate = useNavigate();
