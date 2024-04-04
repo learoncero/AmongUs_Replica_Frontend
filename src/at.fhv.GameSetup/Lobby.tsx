@@ -1,13 +1,19 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate} from "react-router-dom";
 import { Game, Player } from "../App";
 import SockJS from "sockjs-client";
 import Stomp from "stompjs";
 
-export default function Lobby() {
+type Props = {
+  game: Game;
+  setGame: (game: Game) => void;
+  stompClient: Stomp.Client;
+  setStompClient: (stompClient: Stomp.Client) => void;
+};
+
+export default function Lobby({game, setGame, stompClient, setStompClient}: Props) {
+  const navigate = useNavigate();
   const { gameCode } = useParams();
-  const [game, setGame] = useState<Game | null>(null);
-  const [stompClient, setStompClient] = useState(null);
   const [playerList, setPlayerList] = useState<Player[]>([]);
 
   useEffect(() => {
@@ -58,19 +64,22 @@ export default function Lobby() {
       .catch((error) => {
         console.error("Error fetching game data:", error);
       });
-  }, []);
+  }, [gameCode, setGame]);
 
-  function handleStartGame() {
-    fetch(`/api/game/${gameCode}/start`, { method: "POST" })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Failed to start game");
-        }
-      })
-      .catch((error) => console.error("Error starting game:", error));
+  function handleStartGame(event) {
+    event.preventDefault();
+    console.log("Game being sent: ", game);
+    sendGameToServerAndGoToGame(game);
   }
 
-  const isGameReadyToStart = game?.numberOfPlayers === playerList.length;
+  function sendGameToServerAndGoToGame(game: Game) {
+    if (stompClient) {
+      console.log("sending game to backend...");
+      stompClient.send(`/app/${gameCode}/play`, {}, JSON.stringify(game));
+      navigate(`/${game.gameCode}/play`);
+    }
+  }
+  const isGameReadyToStart = game?.numberOfPlayers === game?.players.length;
 
   return (
     <div className="min-h-screen bg-black flex justify-center pl-5 items-center gap-10">

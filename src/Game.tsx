@@ -1,21 +1,26 @@
+/*
 import { useState, useEffect } from "react";
-import Stomp from "stompjs";
-import SockJS from "sockjs-client";
-import MapDisplay from "./MapDisplay";
-import { Player } from "./App";
 
-export type GameMap = {
-  map: boolean[][];
+import MapDisplay from "./MapDisplay";
+import { Player, Game } from "./App";
+import Stomp from "stompjs";
+
+
+
+
+type Props = {
+  game: Game;
+  stompClient: Stomp.Client;
 };
 
-export default function Game() {
+export default function Game({game, stompClient}: Props) {
   const [nextID, setNextID] = useState(0);
-  const [stompClient, setStompClient] = useState(null);
+  // const [stompClient, setStompClient] = useState(null);
   const [player, setPlayer] = useState<Player | null>(null);
   const [playerList, setPlayerList] = useState<Player[]>([]);
   const [GameMap, setGameMap] = useState<GameMap | null>(null);
 
-  useEffect(() => {
+  /!*useEffect(() => {
     if (!stompClient) {
       const socket = new SockJS("http://localhost:5010/ws");
       const client = Stomp.over(socket);
@@ -29,7 +34,8 @@ export default function Game() {
         }
       };
     }
-  }, [stompClient]);
+  }, [stompClient]); // Only run effect App is rendered*!/
+
 
   useEffect(() => {
     if (stompClient) {
@@ -109,11 +115,11 @@ export default function Game() {
     console.log("GameMap: " + GameMap.map[0][0]);
   }
   //for debugging
-  /*useEffect(() => {
+  /!*useEffect(() => {
         if (player !== null) {
             console.log("updated Player State: " + player.x + ", " + player.y);
         }
-    }, [player]);*/
+    }, [player]);*!/
 
   return (
     <div className="bg-black min-h-screen py-6 pl-6">
@@ -143,7 +149,7 @@ export default function Game() {
       stompClient.send("/app/mapinitialiser", {}, JSON.stringify({}));
     }
   }
-  //todo, player creation be done in backend. with random x,y values
+
   function joinGame(nextID: number, player: Player) {
     if (stompClient && player === null) {
       const playerID = nextID + 1;
@@ -189,41 +195,7 @@ export default function Game() {
     setPlayerList(updatedPlayerList);
   }
 
-  function move(direction: string) {
-    let deltaX = 0,
-      deltaY = 0;
 
-    // Determine the change in position based on the direction
-    switch (direction) {
-      case "left":
-        deltaX = -1;
-        break;
-      case "up":
-        deltaY = -1;
-        break;
-      case "right":
-        deltaX = 1;
-        break;
-      case "down":
-        deltaY = 1;
-        break;
-      default:
-        return;
-    }
-
-    // Calculate the new position
-    const newPlayerPosition = {
-      x: player.x + deltaX,
-      y: player.y + deltaY,
-    };
-
-    // Send the move message
-    stompClient.send(
-      "/app/move",
-      {},
-      JSON.stringify({ id: player.id, newPosition: newPlayerPosition })
-    );
-  }
 
   function updatePlayerAndList(player: Player) {
     setPlayer(player);
@@ -234,3 +206,4 @@ export default function Game() {
     setGameMap(GameMap);
   }
 }
+*/
