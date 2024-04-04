@@ -106,7 +106,7 @@ export function PlayGame ({game, playerList, onChangeUpdatePlayerList}:Props) {
 
     //console.log("Map in PlayGame Game Component: "+game.map);
     return (
-        <div>
+        <div className="min-h-screen bg-black text-white">
             <h4>List of players:</h4>
             <ul>
                 {playerList.map(player => (
