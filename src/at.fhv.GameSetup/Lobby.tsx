@@ -1,8 +1,8 @@
-import { useEffect} from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate} from "react-router-dom";
+import { Game, Player } from "../App";
 import SockJS from "sockjs-client";
 import Stomp from "stompjs";
-import {Game} from "../App";
 
 type Props = {
   game: Game;
@@ -14,10 +14,38 @@ type Props = {
 export default function Lobby({game, setGame, stompClient, setStompClient}: Props) {
   const navigate = useNavigate();
   const { gameCode } = useParams();
+  const [playerList, setPlayerList] = useState<Player[]>([]);
 
   useEffect(() => {
-    console.log("useEffect triggered");
+    if (!stompClient) {
+      const socket = new SockJS("http://localhost:5010/ws");
+      const client = Stomp.over(socket);
+      client.connect({}, () => {
+        setStompClient(client);
+      });
 
+      return () => {
+        if (stompClient) {
+          stompClient.disconnect();
+        }
+      };
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!stompClient) return;
+
+    stompClient.subscribe(
+      "/topic/playerJoined",
+      (message: { body: string }) => {
+        const receivedMessage = JSON.parse(message.body);
+        setGame(receivedMessage.body);
+        setPlayerList(receivedMessage.body.players); // Update playerList state
+      }
+    );
+  }, [stompClient]);
+
+  useEffect(() => {
     const apiUrl = `http://localhost:5010/api/game/${gameCode}`;
 
     fetch(apiUrl)
@@ -31,6 +59,7 @@ export default function Lobby({game, setGame, stompClient, setStompClient}: Prop
       })
       .then((gameData) => {
         setGame(gameData);
+        setPlayerList(gameData.players);
       })
       .catch((error) => {
         console.error("Error fetching game data:", error);
@@ -39,25 +68,9 @@ export default function Lobby({game, setGame, stompClient, setStompClient}: Prop
 
   function handleStartGame(event) {
     event.preventDefault();
-    console.log("Starting game... Data:", game);
-
-      if (!stompClient) {
-          const socket = new SockJS("http://localhost:5010/ws");
-          const client = Stomp.over(socket);
-          client.connect({}, () => {
-              setStompClient(client);
-          });
-          console.log("Game connection established upon pressing StartGame in Lobby");
-      }
+    console.log("Game being sent: ", game);
+    sendGameToServerAndGoToGame(game);
   }
-
-    useEffect(() => {
-        console.log("useEffect triggered: StompClient is set.");
-        if(stompClient){
-            console.log("Game being sent: ", game);
-            sendGameToServerAndGoToGame(game);
-        }
-    }, [stompClient]);
 
   function sendGameToServerAndGoToGame(game: Game) {
     if (stompClient) {
@@ -73,18 +86,18 @@ export default function Lobby({game, setGame, stompClient, setStompClient}: Prop
       <div className="max-w-xl text-white p-8 rounded-lg border-white border flex flex-col grow h-96">
         <div>
           <h2 className="text-3xl font-bold mb-4 text-white">
-            Players ({game?.players.length}/{game?.numberOfPlayers})
+            Players ({playerList.length}/{game?.numberOfPlayers})
           </h2>
           <hr className="border-white mb-4" />
           {game && (
             <>
-              {game.numberOfPlayers === game.players.length ? (
+              {game.numberOfPlayers === playerList.length ? (
                 <p className="pb-4">You can start the game!</p>
               ) : (
                 <p className="pb-4">Waiting for players...</p>
               )}
               <ul className="list-none p-0">
-                {game.players.map((player) => (
+                {playerList.map((player) => (
                   <li
                     key={player.id}
                     className="mb-2 px-4 py-2 bg-gray-800 rounded-lg"

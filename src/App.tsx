@@ -23,16 +23,40 @@ export type Player = {
 };
 
 export default function App() {
+  const [nextPlayerID, setNextPlayerID] = useState(1);
   const [stompClient, setStompClient] = useState(null);
   const [game, setGame] = useState<Game | null>(null);
+
+  function incrementNextPlayerID() {
+    setNextPlayerID(nextPlayerID + 1);
+  }
+
+  console.log("nextPlayerID", nextPlayerID);
+  
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/chooseGameMode" element={<ChooseGameMode />} />
-      <Route path="/gameSetup" element={<GameSetupPage />} />
+      <Route
+        path="/gameSetup"
+        element={
+          <GameSetupPage
+            nextPlayerID={nextPlayerID}
+            incrementNextPlayerID={incrementNextPlayerID}
+          />
+        }
+      />
+      <Route
+        path="/joinGame"
+        element={
+          <JoinGame
+            nextPlayerID={nextPlayerID}
+            incrementNextPlayerID={incrementNextPlayerID}
+          />
+        }
+      />
       <Route path="/lobby/:gameCode" element={<Lobby game={game} setGame={setGame} stompClient={stompClient} setStompClient={setStompClient}/>} />
       <Route path="/:gamecode/play" element={<PlayGame game={game} stompClient={stompClient}/>} />
-      <Route path="/joinGame" element={<JoinGame />} />
     </Routes>
   );
 }

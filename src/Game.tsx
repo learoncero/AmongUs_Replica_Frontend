@@ -36,6 +36,7 @@ export default function Game({game, stompClient}: Props) {
     }
   }, [stompClient]); // Only run effect App is rendered*!/
 
+
   useEffect(() => {
     if (stompClient) {
       const handleKeyDown = (event: { code: any }) => {
@@ -94,28 +95,6 @@ export default function Game({game, stompClient}: Props) {
             y: receivedMessage.position.y,
           };
           updatePlayerAndList(newPlayerPositionChange);
-        }
-      );
-
-      stompClient.subscribe(
-        "/topic/playerJoin",
-        (message: { body: string }) => {
-          const receivedMessage = JSON.parse(message.body);
-          const playerId = receivedMessage.id;
-          const username = receivedMessage.username;
-          const posX = receivedMessage.position.x;
-          const posY = receivedMessage.position.y;
-          const newJoinedPlayer = {
-            id: playerId,
-            username: username,
-            x: posX,
-            y: posY,
-          };
-          updatePlayerList(newJoinedPlayer);
-
-          if (player && receivedMessage.id === player.id) {
-            setPlayer(receivedMessage);
-          }
         }
       );
 
