@@ -28,7 +28,5 @@ export default function MapDisplay({map, playerList}: Props) {
                 </div>
             ))}
         </div>
-      ))}
-    </div>
-  );
+      );
 }
