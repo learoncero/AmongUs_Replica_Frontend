@@ -1,17 +1,15 @@
 import {useEffect, useState} from "react";
 import { useParams, useNavigate} from "react-router-dom";
-import { Game, Player } from "../App";
+import { Game } from "../App";
 import SockJS from "sockjs-client";
 import Stomp from "stompjs";
 
 type Props = {
   game: Game;
-  onCreationSetGame: (game: Game) => void;
-  playerList: Player[];
-  onChangeUpdatePlayerList: (playerList: Array<Player>) => void;
+  onChangeSetGame: (game: Game) => void;
 };
 
-export default function Lobby({game, onCreationSetGame, playerList, onChangeUpdatePlayerList}: Props) {
+export default function Lobby({game, onChangeSetGame}: Props) {
   const [stompClient, setStompClient] = useState(null);
   const navigate = useNavigate();
   const { gameCode } = useParams();
@@ -32,22 +30,6 @@ export default function Lobby({game, onCreationSetGame, playerList, onChangeUpda
     }
   }, []);
 
-  /*useEffect(() => {
-    if (!stompClient) {
-      const socket = new SockJS("http://localhost:5010/ws");
-      const client = Stomp.over(socket);
-      client.connect({}, () => {
-        setStompClient(client);
-      });
-
-      return () => {
-        if (stompClient) {
-          stompClient.disconnect();
-        }
-      };
-    }
-  }, [setStompClient, stompClient]);*/
-
   useEffect(() => {
     if (!stompClient) return;
 
@@ -55,14 +37,14 @@ export default function Lobby({game, onCreationSetGame, playerList, onChangeUpda
       "/topic/playerJoined",
       (message: { body: string }) => {
         const receivedMessage = JSON.parse(message.body);
-        onCreationSetGame(receivedMessage.body);
-        onChangeUpdatePlayerList(receivedMessage.body.players); // Update playerList state
+        onChangeSetGame(receivedMessage.body);
       }
     );
   }, [stompClient]);
 
   useEffect(() => {
     const apiUrl = `http://localhost:5010/api/game/${gameCode}`;
+    console.log("Fetching game data from: ", apiUrl);
 
     fetch(apiUrl)
       .then((response) => {
@@ -71,18 +53,17 @@ export default function Lobby({game, onCreationSetGame, playerList, onChangeUpda
             `Failed to fetch game data: ${response.status} ${response.statusText}`
           );
         }
+        console.log("Response in fetch game: ", response);
         return response.json();
       })
       .then((gameData) => {
-        onCreationSetGame(gameData);
-        onChangeUpdatePlayerList(gameData.players);
         console.log("Game data fetched:", gameData);
         console.log("PlayerData: " + gameData.players);
       })
       .catch((error) => {
         console.error("Error fetching game data:", error);
       });
-  }, [gameCode, onCreationSetGame]);
+  }, [gameCode, onChangeSetGame]);
 
   function handleStartGame(event) {
     event.preventDefault();
@@ -105,18 +86,18 @@ export default function Lobby({game, onCreationSetGame, playerList, onChangeUpda
       <div className="max-w-xl text-white p-8 rounded-lg border-white border flex flex-col grow h-96">
         <div>
           <h2 className="text-3xl font-bold mb-4 text-white">
-            Players ({playerList.length}/{game?.numberOfPlayers})
+            Players ({game.players.length}/{game?.numberOfPlayers})
           </h2>
           <hr className="border-white mb-4" />
           {game && (
             <>
-              {game.numberOfPlayers === playerList.length ? (
+              {game.numberOfPlayers === game.players.length ? (
                 <p className="pb-4">You can start the game!</p>
               ) : (
                 <p className="pb-4">Waiting for players...</p>
               )}
               <ul className="list-none p-0">
-                {playerList.map((player) => (
+                {game.players.map((player) => (
                   <li
                     key={player.id}
                     className="mb-2 px-4 py-2 bg-gray-800 rounded-lg"
