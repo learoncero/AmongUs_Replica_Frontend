@@ -25,19 +25,13 @@ export type Player = {
 export default function App() {
   const [nextPlayerID, setNextPlayerID] = useState(1);
   const [game, setGame] = useState<Game | null>(null);
-  const [playerList, setPlayerList] = useState<Player[]>([]);
 
   function incrementNextPlayerID() {
     setNextPlayerID(nextPlayerID + 1);
   }
-
   console.log("nextPlayerID", nextPlayerID);
-  function onChangeUpdatePlayerList(currentPlayerList: Player[]) {
-      console.log("onChangeUpdatePlayerList in App is called");
-      setPlayerList(currentPlayerList);
-  }
 
-  function onCreationSetGame(gameCreated: Game) {
+  function onChangeSetGame(gameCreated: Game) {
       setGame(gameCreated);
     }
 
@@ -51,6 +45,7 @@ export default function App() {
           <GameSetupPage
             nextPlayerID={nextPlayerID}
             incrementNextPlayerID={incrementNextPlayerID}
+            onChangeSetGame={onChangeSetGame}
           />
         }
       />
@@ -68,16 +63,15 @@ export default function App() {
         element={
           <Lobby
             game={game}
-            onCreationSetGame={onCreationSetGame}
-            playerList={playerList}
-            onChangeUpdatePlayerList={onChangeUpdatePlayerList}/>} />
+            onChangeSetGame={onChangeSetGame}
+            />} />
       <Route
         path="/:gamecode/play"
         element={
           <PlayGame
             game={game}
-            playerList={playerList}
-            onChangeUpdatePlayerList={onChangeUpdatePlayerList}/>} />
+            onChangeSetGame={onChangeSetGame}
+            />} />
     </Routes>
   );
 }
