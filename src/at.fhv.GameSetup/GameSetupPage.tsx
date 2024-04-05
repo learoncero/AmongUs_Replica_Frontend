@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import {Game} from "../App";
 
 type Props = {
   nextPlayerID: number;
   incrementNextPlayerID: () => void;
+  onChangeSetGame: (game: Game) => void;
 };
 
 export default function GameSetupPage({
   nextPlayerID,
   incrementNextPlayerID,
+  onChangeSetGame,
 }: Props) {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
@@ -32,6 +35,10 @@ export default function GameSetupPage({
     event.preventDefault();
 
     const gameData = {
+      gameCode: 0,
+      numberOfPlayers: numPlayers,
+      numberOfImpostors: numImpostors,
+      map: map,
       player: {
         id: nextPlayerID,
         username: username,
@@ -39,10 +46,7 @@ export default function GameSetupPage({
           x: 9,
           y: 9,
         },
-      },
-      numberOfPlayers: numPlayers,
-      numberOfImpostors: numImpostors,
-      map: map,
+      }
     };
 
     incrementNextPlayerID();
@@ -63,6 +67,8 @@ export default function GameSetupPage({
         return response.json();
       })
       .then((game) => {
+        onChangeSetGame(game);
+        console.log("Game created, response from backend:", game);
         navigate(`/lobby/${game.gameCode}`);
       })
       .catch((error) => {
