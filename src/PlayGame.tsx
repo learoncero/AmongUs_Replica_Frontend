@@ -1,4 +1,4 @@
-import {Game, Player} from "./App";
+import {Game} from "./App";
 import Stomp from "stompjs";
 import MapDisplay from "./MapDisplay";
 import {useEffect, useState} from "react";
@@ -6,11 +6,10 @@ import SockJS from "sockjs-client";
 
 type Props = {
     game: Game;
-    playerList: Array<Player>;
-    onChangeUpdatePlayerList(playerList: Player[]) : void;
+    onChangeSetGame(game: Game) : void;
 };
 
-export function PlayGame ({game, playerList, onChangeUpdatePlayerList}:Props) {
+export function PlayGame ({game, onChangeSetGame}:Props) {
     const [stompClient, setStompClient] = useState(null);
 
     useEffect(() => {
@@ -34,42 +33,20 @@ export function PlayGame ({game, playerList, onChangeUpdatePlayerList}:Props) {
             stompClient.subscribe(
                 "/topic/positionChange",
                 (message: { body: string }) => {
-                    //console.log("Received message: " + message.body);
                     const receivedMessage = JSON.parse(message.body);
-                    const playerId = receivedMessage.id;
-                    const username = receivedMessage.username;
-                    /*console.log(
-                        "Return message- ID: " +
-                        playerId +
-                        " Username: " +
-                        username +
-                        " X: " +
-                        receivedMessage.position.x +
-                        " Y: " +
-                        receivedMessage.position.y
-                    );*/
-                    const newPlayerPositionChange = {
-                        id: playerId,
-                        username: username,
-                        position: {
-                            x: receivedMessage.position.x,
-                            y: receivedMessage.position.y,
-                        }
-                    };
-                    updatePlayerInList(newPlayerPositionChange);
+                    console.log("Received message: ", receivedMessage);
+                    updatePlayerInList(receivedMessage);
                 }
             );
-        }console.log("After updatePlayerInList is called:", playerList);
+        }
     }, [stompClient]);
 
     useEffect(() => {
-        console.log("UseEffect for PlayerList at index[0]: "+playerList[0].username+" at position: "+playerList[0].position.x+", "+playerList[0].position.y);
-    }, [playerList]);
+        console.log("UseEffect for game.players at index[0]: "+game.players[0].username+" at position: "+game.players[0].position.x+", "+game.players[0].position.y);
+    }, [game]);
 
     console.log("PlayGame rendered");
-    console.log("After Rendering PlayerList is:", playerList);
-    //this next log prints the old state so playerList in game.players is not updated
-    console.log("Game in PlayGame: GameCode: "+game.gameCode + "Player1 username: " + game.players.at(0).username + "Position X, Y: "+game.players.at(0).position.x+", "+game.players.at(0).position.y);
+    console.log("Game in PlayGame after rendering: GameCode: "+game.gameCode + "Player1 username: " + game.players.at(0).username + "Position X, Y: "+game.players.at(0).position.x+", "+game.players.at(0).position.y);
 
     useEffect(() => {
         if (stompClient) {
@@ -109,7 +86,7 @@ export function PlayGame ({game, playerList, onChangeUpdatePlayerList}:Props) {
         <div className="min-h-screen bg-black text-white">
             <h4>List of players:</h4>
             <ul>
-                {playerList.map(player => (
+                {game.players.map(player => (
                     <li key={player.id}>
                         {player.username}
                         {player.id === 1 ? " (you)" : ""}
@@ -117,7 +94,7 @@ export function PlayGame ({game, playerList, onChangeUpdatePlayerList}:Props) {
                 ))}
             </ul>
 
-            <MapDisplay map={game.map} playerList={playerList} />
+            <MapDisplay map={game.map} playerList={game.players} />
         </div>
     )
 
@@ -143,17 +120,17 @@ export function PlayGame ({game, playerList, onChangeUpdatePlayerList}:Props) {
                 return;
         }
 
-        const playerIndex = playerList.findIndex(player => player.id === playerId);
+        const playerIndex = game.players.findIndex(player => player.id === playerId);
         console.log("Move Function: playerIndex:"+playerIndex);
         // Calculate the new position
         if(playerIndex !== -1) {
-            for (const p of playerList){
+            for (const p of game.players){
                 console.log("Move Function playerList.at(playerIndex) User: " + p.username + " at position: " + p.position.x + ", " + p.position.y);
             }
             const newPlayerPosition = {
-                x: playerList.at(playerIndex).position.x + deltaX,
+                x: game.players.at(playerIndex).position.x + deltaX,
 
-                y: playerList.at(playerIndex).position.y + deltaY,
+                y: game.players.at(playerIndex).position.y + deltaY,
             };
                 console.log("Move Function: getting new Coordinates with delta: " + newPlayerPosition.x +", " +newPlayerPosition.y)
 
@@ -164,21 +141,6 @@ export function PlayGame ({game, playerList, onChangeUpdatePlayerList}:Props) {
                 JSON.stringify({id: playerId, newPosition: newPlayerPosition})
             );
         }
-        /*const playerIndex = game.players.findIndex(player => player.id === playerId);
-        // Calculate the new position
-        if(playerIndex !== -1) {
-            const newPlayerPosition = {
-                x: game.players.at(playerIndex).position.x + deltaX,
-                y: game.players.at(playerIndex).position.y + deltaY,
-            };
-
-            // Send the move message
-            stompClient.send(
-                "/app/move",
-                {},
-                JSON.stringify({id: playerId, newPosition: newPlayerPosition})
-            );
-        }*/
     }
 
     function updatePlayerInList(updatedPlayer: {
@@ -189,7 +151,8 @@ export function PlayGame ({game, playerList, onChangeUpdatePlayerList}:Props) {
             y: number;
         }
     }) {
-        const updatedPlayerList = [...playerList];
+        const updatedGame = {...game};
+        const updatedPlayerList = [...game.players];
         const updatedPlayerIndex = updatedPlayerList.findIndex(
             (player) => player.id === updatedPlayer.id
         );
@@ -198,10 +161,10 @@ export function PlayGame ({game, playerList, onChangeUpdatePlayerList}:Props) {
         if (updatedPlayerIndex !== -1) {
             updatedPlayerList[updatedPlayerIndex] = updatedPlayer;
         }
+        updatedGame.players = updatedPlayerList;
 
-        console.log("Before setPlayerList:", playerList);
-        onChangeUpdatePlayerList(updatedPlayerList);
-        //game.players = updatedPlayerList;
+        console.log("Before setPlayerList:", game.players);
+        onChangeSetGame(updatedGame);
         console.log("UpdatedPlayerList at index[0]: "+updatedPlayerList[0].username+" at position: "+updatedPlayerList[0].position.x+", "+updatedPlayerList[0].position.y)
     }
 
