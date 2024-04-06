@@ -28,6 +28,20 @@ export function PlayGame ({game, onChangeSetGame}:Props) {
         }
     }, []);
 
+    function handleKeyDown(event: KeyboardEvent) {
+        const keyCode = event.code;
+        if (stompClient && game.players.length > 0) {
+            stompClient.send("/app/move", {}, keyCode);
+        }
+    }
+
+    useEffect(() => {
+        window.addEventListener("keydown", handleKeyDown);
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [stompClient, game.players]);
+
     useEffect(() => {
         if (stompClient) {
             stompClient.subscribe(
@@ -40,47 +54,30 @@ export function PlayGame ({game, onChangeSetGame}:Props) {
             );
         }
     }, [stompClient]);
-
+/*
     useEffect(() => {
-        console.log("UseEffect for game.players at index[0]: "+game.players[0].username+" at position: "+game.players[0].position.x+", "+game.players[0].position.y);
+        console.log(
+            "UseEffect for game.players at index[0]: " +
+            game.players[0].username +
+            " at position: " +
+            game.players[0].position.x +
+            ", " +
+            game.players[0].position.y
+        );
     }, [game]);
 
     console.log("PlayGame rendered");
-    console.log("Game in PlayGame after rendering: GameCode: "+game.gameCode + "Player1 username: " + game.players.at(0).username + "Position X, Y: "+game.players.at(0).position.x+", "+game.players.at(0).position.y);
-
-    useEffect(() => {
-        if (stompClient) {
-            const handleKeyDown = (event: { code: any }) => {
-                // Detect arrow key press
-                const keyCode = event.code;
-                switch (keyCode) {
-                    case "ArrowLeft": // Left arrow
-                        move(1,"left");
-                        break;
-                    case "ArrowUp": // Up arrow
-                        move(1,"up");
-                        break;
-                    case "ArrowRight": // Right arrow
-                        move(1,"right");
-                        break;
-                    case "ArrowDown": // Down arrow
-                        move(1,"down");
-                        break;
-                    default:
-                        return;
-                }
-            };
-
-            window.addEventListener("keydown", handleKeyDown);
-
-            return () => {
-                window.removeEventListener("keydown", handleKeyDown);
-            };
-        }
-    }, [stompClient]);
-
-
-
+    console.log(
+        "Game in PlayGame after rendering: GameCode: " +
+        game.gameCode +
+        "Player1 username: " +
+        game.players.at(0).username +
+        "Position X, Y: " +
+        game.players.at(0).position.x +
+        ", " +
+        game.players.at(0).position.y
+    );
+*/
     //console.log("Map in PlayGame Game Component: "+game.map);
     return (
         <div className="min-h-screen bg-black text-white">
@@ -97,51 +94,6 @@ export function PlayGame ({game, onChangeSetGame}:Props) {
             <MapDisplay map={game.map} playerList={game.players} />
         </div>
     )
-
-    function move(playerId: number, direction: string) {
-        let deltaX = 0,
-            deltaY = 0;
-
-        // Determine the change in position based on the direction
-        switch (direction) {
-            case "left":
-                deltaX = -1;
-                break;
-            case "up":
-                deltaY = -1;
-                break;
-            case "right":
-                deltaX = 1;
-                break;
-            case "down":
-                deltaY = 1;
-                break;
-            default:
-                return;
-        }
-
-        const playerIndex = game.players.findIndex(player => player.id === playerId);
-        console.log("Move Function: playerIndex:"+playerIndex);
-        // Calculate the new position
-        if(playerIndex !== -1) {
-            for (const p of game.players){
-                console.log("Move Function playerList.at(playerIndex) User: " + p.username + " at position: " + p.position.x + ", " + p.position.y);
-            }
-            const newPlayerPosition = {
-                x: game.players.at(playerIndex).position.x + deltaX,
-
-                y: game.players.at(playerIndex).position.y + deltaY,
-            };
-                console.log("Move Function: getting new Coordinates with delta: " + newPlayerPosition.x +", " +newPlayerPosition.y)
-
-            // Send the move message
-            stompClient.send(
-                "/app/move",
-                {},
-                JSON.stringify({id: playerId, newPosition: newPlayerPosition})
-            );
-        }
-    }
 
     function updatePlayerInList(updatedPlayer: {
         id: number;
@@ -167,6 +119,4 @@ export function PlayGame ({game, onChangeSetGame}:Props) {
         onChangeSetGame(updatedGame);
         console.log("UpdatedPlayerList at index[0]: "+updatedPlayerList[0].username+" at position: "+updatedPlayerList[0].position.x+", "+updatedPlayerList[0].position.y)
     }
-
-
 }

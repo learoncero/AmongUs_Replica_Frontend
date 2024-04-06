@@ -9,8 +9,8 @@ export default function PlayerIcon({ player }: Props) {
     <div
       style={{
         position: "absolute",
-        left: player.x,
-        top: player.y,
+        left: player.position.x,
+        top: player.position.y,
         width: "50px",
         height: "50px",
         backgroundColor: "red",
