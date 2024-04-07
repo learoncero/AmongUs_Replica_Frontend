@@ -3,15 +3,7 @@ import { useState, useEffect } from "react";
 import SockJS from "sockjs-client";
 import Stomp from "stompjs";
 
-type Props = {
-  nextPlayerID: number;
-  incrementNextPlayerID: () => void;
-};
-
-export default function JoinGame({
-  nextPlayerID,
-  incrementNextPlayerID,
-}: Props) {
+export default function JoinGame() {
   const navigate = useNavigate();
   const [playerName, setPlayerName] = useState("");
   const [gameCode, setGameCode] = useState("");
@@ -44,7 +36,6 @@ export default function JoinGame({
   const handleJoinGame = () => {
     if (!isJoinDisabled && stompClient) {
       const data = {
-        id: nextPlayerID,
         username: playerName,
         position: {
           x: 10,
@@ -52,8 +43,6 @@ export default function JoinGame({
         },
         gameCode: gameCode,
       };
-
-      incrementNextPlayerID();
 
       stompClient.send("/app/joinGame", {}, JSON.stringify(data));
 

@@ -23,13 +23,7 @@ export type Player = {
 };
 
 export default function App() {
-  const [nextPlayerID, setNextPlayerID] = useState(1);
   const [game, setGame] = useState<Game | null>(null);
-
-  function incrementNextPlayerID() {
-    setNextPlayerID(nextPlayerID + 1);
-  }
-  console.log("nextPlayerID", nextPlayerID);
 
   function onChangeSetGame(gameCreated: Game) {
       setGame(gameCreated);
@@ -43,8 +37,6 @@ export default function App() {
         path="/gameSetup"
         element={
           <GameSetupPage
-            nextPlayerID={nextPlayerID}
-            incrementNextPlayerID={incrementNextPlayerID}
             onChangeSetGame={onChangeSetGame}
           />
         }
@@ -52,10 +44,7 @@ export default function App() {
       <Route
         path="/joinGame"
         element={
-          <JoinGame
-            nextPlayerID={nextPlayerID}
-            incrementNextPlayerID={incrementNextPlayerID}
-          />
+          <JoinGame/>
         }
       />
       <Route

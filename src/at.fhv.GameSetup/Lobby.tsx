@@ -1,4 +1,4 @@
-import {useEffect, useState} from "react";
+import {useCallback, useEffect, useState} from "react";
 import { useParams, useNavigate} from "react-router-dom";
 import { Game } from "../App";
 import SockJS from "sockjs-client";
@@ -30,6 +30,8 @@ export default function Lobby({game, onChangeSetGame}: Props) {
     }
   }, []);
 
+  const memoizedOnChangeSetGame = useCallback(onChangeSetGame, [onChangeSetGame]);
+
   useEffect(() => {
     if (!stompClient) return;
 
@@ -37,10 +39,10 @@ export default function Lobby({game, onChangeSetGame}: Props) {
       "/topic/playerJoined",
       (message: { body: string }) => {
         const receivedMessage = JSON.parse(message.body);
-        onChangeSetGame(receivedMessage.body);
+        memoizedOnChangeSetGame(receivedMessage.body);
       }
     );
-  }, [stompClient]);
+  }, [stompClient, memoizedOnChangeSetGame]);
 
   useEffect(() => {
     const apiUrl = `http://localhost:5010/api/game/${gameCode}`;
@@ -59,11 +61,14 @@ export default function Lobby({game, onChangeSetGame}: Props) {
       .then((gameData) => {
         console.log("Game data fetched:", gameData);
         console.log("PlayerData: " + gameData.players);
+        if (JSON.stringify(gameData) !== JSON.stringify(game)) {
+          memoizedOnChangeSetGame(gameData);
+        }
       })
       .catch((error) => {
         console.error("Error fetching game data:", error);
       });
-  }, [gameCode, onChangeSetGame]);
+  }, [gameCode, memoizedOnChangeSetGame]);
 
   function handleStartGame(event) {
     event.preventDefault();
@@ -79,9 +84,14 @@ export default function Lobby({game, onChangeSetGame}: Props) {
       console.log("Start Game button handler: Game sent to backend!" + game);
     }
   }
+
+  if (!game) {
+    return <div>Loading...</div>; // or any loading indicator
+  }
+
   const isGameReadyToStart = game?.numberOfPlayers === game?.players.length;
 
-  return game ? (
+  return (
     <div className="min-h-screen bg-black flex justify-center pl-5 items-center gap-10">
       <div className="max-w-xl text-white p-8 rounded-lg border-white border flex flex-col grow h-96">
         <div>
@@ -128,5 +138,5 @@ export default function Lobby({game, onChangeSetGame}: Props) {
         </button>
       </div>
     </div>
-  ) : null;
+  );
 }
