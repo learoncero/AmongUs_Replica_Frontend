@@ -81,7 +81,7 @@ export default function Lobby({game, onChangeSetGame}: Props) {
   }
   const isGameReadyToStart = game?.numberOfPlayers === game?.players.length;
 
-  return (
+  return game ? (
     <div className="min-h-screen bg-black flex justify-center pl-5 items-center gap-10">
       <div className="max-w-xl text-white p-8 rounded-lg border-white border flex flex-col grow h-96">
         <div>
@@ -128,5 +128,5 @@ export default function Lobby({game, onChangeSetGame}: Props) {
         </button>
       </div>
     </div>
-  );
+  ) : null;
 }
