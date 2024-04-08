@@ -87,8 +87,6 @@ export default function Lobby({ game, onChangeSetGame }: Props) {
     }
   }
 
-  function sendGameToServerAndGoToGame(game: Game) {}
-
   if (!game) {
     return <div>Loading...</div>; // or any loading indicator
   }
