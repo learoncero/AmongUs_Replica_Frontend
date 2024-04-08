@@ -51,6 +51,30 @@ export default function JoinGame() {
     }
   };
 
+  // Handle the response to get the player ID from the header
+  const handleJoinGameResponse = (message) => {
+    const data = JSON.parse(message.body);
+    const playerId = data.headers.playerId[0];
+    console.log("Player ID received:", playerId);
+    if (playerId) {
+      // Store player ID in a cookie
+      document.cookie = `playerId=${playerId}; path=/`;
+      console.log("Player ID stored in cookie:", playerId);
+    }
+  };
+
+  useEffect(() => {
+    if (stompClient) {
+      stompClient.subscribe(
+          "/topic/playerJoined",
+          (message ) => {
+            console.log("Received message: ", message);
+            handleJoinGameResponse(message);
+          }
+      );
+    }
+  }, [stompClient]);
+
   return (
     <div className="bg-black flex justify-center items-center h-screen">
       <div className="max-w-md text-white p-8 rounded-lg border-white border">

@@ -30,8 +30,14 @@ export function PlayGame ({game, onChangeSetGame}:Props) {
 
     function handleKeyDown(event: KeyboardEvent) {
         const keyCode = event.code;
-        if (stompClient && game.players.length > 0) {
-            stompClient.send("/app/move", {}, keyCode);
+        // Retrieve player ID from cookie
+        const playerIdCookie = document.cookie.split(";").find(cookie => cookie.trim().startsWith("playerId="));
+        if (playerIdCookie) {
+            const playerId = parseInt(playerIdCookie.split("=")[1]);
+            if (stompClient && game.players.length > 0 && playerId) {
+                // Send move request with player ID and keyCode as JSON object
+                stompClient.send("/app/move", {}, JSON.stringify({ keyCode, playerId }));
+            }
         }
     }
 
