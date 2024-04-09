@@ -21,6 +21,7 @@ export type Player = {
   id: number;
   username: string;
   position: { x: number; y: number };
+  role: string;
 };
 
 export type Sabotage = {

@@ -19,7 +19,7 @@ const MiniMap: React.FC<Props> = ({ Map, playerList, closeMiniMap }) => {
                 <div key={rowIndex} className="MapDisplay-row">
                     {row.map((cell, cellIndex) => (
                         <div key={cellIndex} className={`MapDisplay-cell ${cell ? 'walkable' : 'obstacle'} ${playerList &&
-                        playerList.some((player) => player.x === cellIndex && player.y === rowIndex) ? 'player' :''} '}`}/>
+                        playerList.some((player) => player.position.x === cellIndex && player.position.y === rowIndex) ? 'player' :''} '}`}/>
                     ))}
                 </div>
             ))}

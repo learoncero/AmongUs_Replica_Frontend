@@ -30,22 +30,22 @@ export function PlayGame({ game, onChangeSetGame }: Props) {
     }
   }, []);
 
-    function handleKeyDown(event: KeyboardEvent) {
-        const keyCode = event.code;
-        const playerIdCookie = document.cookie.split(";").find(cookie => cookie.trim().startsWith("playerId="));
-        if (playerIdCookie) {
-            const playerId = playerIdCookie.split("=")[1];
-            // Send move message to server
-            const moveMessage = {
-                id: playerId,
-                keyCode: keyCode,
-                gameCode: game.gameCode,
-            };
-            if (stompClient && game.players.length > 0 && playerId) {
-                stompClient.send("/app/move", {}, JSON.stringify(moveMessage));
-            }
-        }
+  function handleKeyDown(event: KeyboardEvent) {
+    const keyCode = event.code;
+    const playerIdCookie = document.cookie.split(";").find(cookie => cookie.trim().startsWith("playerId="));
+    if (playerIdCookie) {
+      const playerId = playerIdCookie.split("=")[1];
+      // Send move message to server
+      const moveMessage = {
+        id: playerId,
+        keyCode: keyCode,
+        gameCode: game.gameCode,
+      };
+      if (stompClient && game.players.length > 0 && playerId) {
+        stompClient.send("/app/move", {}, JSON.stringify(moveMessage));
+      }
     }
+  }
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
@@ -54,19 +54,29 @@ export function PlayGame({ game, onChangeSetGame }: Props) {
     };
   }, [stompClient, game.players]);
 
-    useEffect(() => {
-        if (stompClient) {
-            stompClient.subscribe(
-                "/topic/positionChange",
-                (message: { body: string }) => {
-                    const receivedMessage = JSON.parse(message.body);
-                    console.log("Received message: ", receivedMessage);
-                    onChangeSetGame(receivedMessage);
-                }
-            );
-        }
-    }, [stompClient]);
-/*
+  useEffect(() => {
+    if (stompClient) {
+        stompClient.subscribe(
+            "/topic/positionChange",
+            (message: { body: string }) => {
+                const receivedMessage = JSON.parse(message.body);
+                console.log("Received message: ", receivedMessage);
+                onChangeSetGame(receivedMessage);
+            }
+        );
+        // Subscribe to receive updated game state
+        stompClient.subscribe(`/topic/${game.gameCode}/play`, (message: { body: string }) => {
+            console.log("Game Message from Subscription to endpoint gamecode/play: " + message.body);
+            const updatedGame = JSON.parse(message.body);
+            onChangeSetGame(updatedGame);
+        });
+        //send game to backend to be updated
+        console.log("sending game to backend...");
+        stompClient.send(`/app/${game.gameCode}/play`, {}, JSON.stringify(game));
+    }
+  }, [stompClient]);
+  /*
+
     useEffect(() => {
         console.log(
             "UseEffect for game.players at index[0]: " +
@@ -92,9 +102,6 @@ export function PlayGame({ game, onChangeSetGame }: Props) {
 */
   //console.log("Map in PlayGame Game Component: "+game.map);
 
-  // TODO: Implement role assignment
-  const role = "Impostor";
-
   return (
     <div className="min-h-screen bg-black text-white">
       <h4>List of players:</h4>
@@ -106,8 +113,8 @@ export function PlayGame({ game, onChangeSetGame }: Props) {
           </li>
         ))}
       </ul>
-      {role === "Impostor" && <ImpostorView sabotages={game.sabotages} />}
-      {role === "Crewmate" && <CrewmateView />}
+        {/*TODO: implement ID search with Cookies*/}
+      {game.players.at(0).role === "Impostor" ? <ImpostorView sabotages={game.sabotages}/> : <CrewmateView />  }
       <MapDisplay map={game.map} playerList={game.players} />
     </div>
   );
@@ -118,7 +125,8 @@ export function PlayGame({ game, onChangeSetGame }: Props) {
     position: {
       x: number;
       y: number;
-    };
+    }
+    role: string;
   }) {
     const updatedGame = { ...game };
     const updatedPlayerList = [...game.players];
