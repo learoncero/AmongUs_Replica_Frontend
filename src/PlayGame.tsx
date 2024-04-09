@@ -1,32 +1,34 @@
-import {Game} from "./App";
+import { Game } from "./App";
 import Stomp from "stompjs";
 import MapDisplay from "./MapDisplay";
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 import SockJS from "sockjs-client";
+import CrewmateView from "./CrewmateView";
+import ImpostorView from "./ImpostorView";
 
 type Props = {
-    game: Game;
-    onChangeSetGame(game: Game) : void;
+  game: Game;
+  onChangeSetGame(game: Game): void;
 };
 
-export function PlayGame ({game, onChangeSetGame}:Props) {
-    const [stompClient, setStompClient] = useState(null);
+export function PlayGame({ game, onChangeSetGame }: Props) {
+  const [stompClient, setStompClient] = useState(null);
 
-    useEffect(() => {
-        if (!stompClient) {
-            const socket = new SockJS("http://localhost:5010/ws");
-            const client = Stomp.over(socket);
-            client.connect({}, () => {
-                setStompClient(client);
-            });
+  useEffect(() => {
+    if (!stompClient) {
+      const socket = new SockJS("http://localhost:5010/ws");
+      const client = Stomp.over(socket);
+      client.connect({}, () => {
+        setStompClient(client);
+      });
 
-            return () => {
-                if (stompClient) {
-                    stompClient.disconnect();
-                }
-            };
+      return () => {
+        if (stompClient) {
+          stompClient.disconnect();
         }
-    }, [stompClient]);
+      };
+    }
+  }, []);
 
     function handleKeyDown(event: KeyboardEvent) {
         const keyCode = event.code;
@@ -45,12 +47,12 @@ export function PlayGame ({game, onChangeSetGame}:Props) {
         }
     }
 
-    useEffect(() => {
-        window.addEventListener("keydown", handleKeyDown);
-        return () => {
-            window.removeEventListener("keydown", handleKeyDown);
-        };
-    }, [stompClient, game.players]);
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [stompClient, game.players]);
 
     useEffect(() => {
         if (stompClient) {
@@ -88,39 +90,64 @@ export function PlayGame ({game, onChangeSetGame}:Props) {
         game.players.at(0).position.y
     );
 */
-    //console.log("Map in PlayGame Game Component: "+game.map);
-    return (
-        <div className="min-h-screen bg-black text-white">
-            <h4>List of players:</h4>
-            <ul>
-                {game.players.map(player => (
-                    <li key={player.id}>
-                        {player.username}
-                        {player.id === 1 ? " (you)" : ""}
-                    </li>
-                ))}
-            </ul>
+  //console.log("Map in PlayGame Game Component: "+game.map);
 
-            <MapDisplay map={game.map} playerList={game.players} />
-        </div>
-    )
-/*
-    function updatePlayerInList(updatedPlayer: Player) {
-        const updatedGame = {...game};
-        const updatedPlayerList = [...game.players];
-        const updatedPlayerIndex = updatedPlayerList.findIndex(
-            (player) => player.id === updatedPlayer.id
-        );
-        console.log("Updated player: "+updatedPlayer.username+" at position: "+updatedPlayer.position.x+", "+updatedPlayer.position.y);
-        console.log("Updated player index: "+updatedPlayerIndex);
-        if (updatedPlayerIndex !== -1) {
-            updatedPlayerList[updatedPlayerIndex] = updatedPlayer;
-        }
-        updatedGame.players = updatedPlayerList;
+  // TODO: Implement role assignment
+  const role = "Impostor";
 
-        console.log("Before setPlayerList:", game.players);
-        onChangeSetGame(updatedGame);
-        console.log("UpdatedPlayerList at updatedPlayerListIndex: "+updatedPlayerList[updatedPlayerIndex].username+" at position: "+updatedPlayerList[updatedPlayerIndex].position.x+", "+updatedPlayerList[updatedPlayerIndex].position.y)
+  return (
+    <div className="min-h-screen bg-black text-white">
+      <h4>List of players:</h4>
+      <ul>
+        {game.players.map((player) => (
+          <li key={player.id}>
+            {player.username}
+            {player.id === 1 ? " (you)" : ""}
+          </li>
+        ))}
+      </ul>
+      {role === "Impostor" && <ImpostorView sabotages={game.sabotages} />}
+      {role === "Crewmate" && <CrewmateView />}
+      <MapDisplay map={game.map} playerList={game.players} />
+    </div>
+  );
+
+  function updatePlayerInList(updatedPlayer: {
+    id: number;
+    username: string;
+    position: {
+      x: number;
+      y: number;
+    };
+  }) {
+    const updatedGame = { ...game };
+    const updatedPlayerList = [...game.players];
+    const updatedPlayerIndex = updatedPlayerList.findIndex(
+      (player) => player.id === updatedPlayer.id
+    );
+    console.log(
+      "Updated player: " +
+        updatedPlayer.username +
+        " at position: " +
+        updatedPlayer.position.x +
+        ", " +
+        updatedPlayer.position.y
+    );
+    console.log("Updated player index: " + updatedPlayerIndex);
+    if (updatedPlayerIndex !== -1) {
+      updatedPlayerList[updatedPlayerIndex] = updatedPlayer;
     }
- */
+    updatedGame.players = updatedPlayerList;
+
+    console.log("Before setPlayerList:", game.players);
+    onChangeSetGame(updatedGame);
+    console.log(
+      "UpdatedPlayerList at index[0]: " +
+        updatedPlayerList[0].username +
+        " at position: " +
+        updatedPlayerList[0].position.x +
+        ", " +
+        updatedPlayerList[0].position.y
+    );
+  }
 }

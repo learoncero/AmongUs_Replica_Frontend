@@ -1,5 +1,5 @@
-import {useCallback, useEffect, useState} from "react";
-import { useParams, useNavigate} from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { Game } from "../App";
 import SockJS from "sockjs-client";
 import Stomp from "stompjs";
@@ -9,7 +9,7 @@ type Props = {
   onChangeSetGame: (game: Game) => void;
 };
 
-export default function Lobby({game, onChangeSetGame}: Props) {
+export default function Lobby({ game, onChangeSetGame }: Props) {
   const [stompClient, setStompClient] = useState(null);
   const navigate = useNavigate();
   const { gameCode } = useParams();
@@ -23,14 +23,16 @@ export default function Lobby({game, onChangeSetGame}: Props) {
       });
 
       return () => {
-        if(stompClient) {
+        if (stompClient) {
           stompClient.disconnect();
         }
       };
     }
   }, []);
 
-  const memoizedOnChangeSetGame = useCallback(onChangeSetGame, [onChangeSetGame]);
+  const memoizedOnChangeSetGame = useCallback(onChangeSetGame, [
+    onChangeSetGame,
+  ]);
 
   useEffect(() => {
     if (!stompClient) return;
@@ -42,6 +44,10 @@ export default function Lobby({game, onChangeSetGame}: Props) {
         memoizedOnChangeSetGame(receivedMessage.body);
       }
     );
+
+    stompClient.subscribe("/topic/" + gameCode + "/play", function (message) {
+      navigate("/" + game.gameCode + "/play");
+    });
   }, [stompClient, memoizedOnChangeSetGame]);
 
   useEffect(() => {
@@ -73,17 +79,15 @@ export default function Lobby({game, onChangeSetGame}: Props) {
   function handleStartGame(event) {
     event.preventDefault();
     console.log("Game being sent: ", game);
-    sendGameToServerAndGoToGame(game);
-  }
-
-  function sendGameToServerAndGoToGame(game: Game) {
     if (stompClient) {
       console.log("sending game to backend...");
       stompClient.send(`/app/${gameCode}/play`, {}, JSON.stringify(game));
-      navigate(`/${game.gameCode}/play`);
+
       console.log("Start Game button handler: Game sent to backend!" + game);
     }
   }
+
+  function sendGameToServerAndGoToGame(game: Game) {}
 
   if (!game) {
     return <div>Loading...</div>; // or any loading indicator
