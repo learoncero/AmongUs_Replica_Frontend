@@ -65,8 +65,22 @@ export function PlayGame({ game, onChangeSetGame }: Props) {
                 }
             );
         }
-    }, [stompClient]);
-/*
+
+      );
+
+      // Subscribe to receive updated game state
+      stompClient.subscribe(`/topic/${game.gameCode}/play`, (message: {body: string}) => {
+        console.log("Game Message from Subscription to endpoint gamecode/play: "+message.body);
+        const updatedGame = JSON.parse(message.body);
+        onChangeSetGame(updatedGame);
+      });
+      //send game to backend to be updated
+      console.log("sending game to backend...");
+      stompClient.send(`/app/${game.gameCode}/play`, {}, JSON.stringify(game));
+    }
+  }, [stompClient]);
+  /*
+
     useEffect(() => {
         console.log(
             "UseEffect for game.players at index[0]: " +
@@ -92,9 +106,6 @@ export function PlayGame({ game, onChangeSetGame }: Props) {
 */
   //console.log("Map in PlayGame Game Component: "+game.map);
 
-  // TODO: Implement role assignment
-  const role = "Impostor";
-
   return (
     <div className="min-h-screen bg-black text-white">
       <h4>List of players:</h4>
@@ -106,8 +117,8 @@ export function PlayGame({ game, onChangeSetGame }: Props) {
           </li>
         ))}
       </ul>
-      {role === "Impostor" && <ImpostorView sabotages={game.sabotages} />}
-      {role === "Crewmate" && <CrewmateView />}
+        {/*TODO: implement ID search with Cookies*/}
+      {game.players.at(0).role === "Impostor" ? <ImpostorView sabotages={game.sabotages}/> : <CrewmateView />  }
       <MapDisplay map={game.map} playerList={game.players} />
     </div>
   );
@@ -118,7 +129,8 @@ export function PlayGame({ game, onChangeSetGame }: Props) {
     position: {
       x: number;
       y: number;
-    };
+    }
+    role: string;
   }) {
     const updatedGame = { ...game };
     const updatedPlayerList = [...game.players];
