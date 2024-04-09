@@ -76,9 +76,14 @@ export function PlayGame({ game, onChangeSetGame }: Props) {
     }
   }, [stompClient]);
 
-  const playerIDCookie = parseInt(document.cookie.split(";").find(cookie => cookie.trim().startsWith("playerId=")));
-  console.log(playerIDCookie);
-  const playerIndex = game.players.findIndex(player => player.id === playerIDCookie);
+  console.log("Cookie: ", document.cookie);
+    const playerIdCookie = document.cookie
+        .split(";")
+        .map(cookie => cookie.trim())
+        .find(cookie => cookie.startsWith("playerId="));
+  console.log(playerIdCookie);
+  const playerId = playerIdCookie ? parseInt(playerIdCookie.split("=")[1]) : null;
+  const playerIndex = game.players.findIndex((player) => player.id === playerId);
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -87,9 +92,7 @@ export function PlayGame({ game, onChangeSetGame }: Props) {
         {game.players.map((player) => (
           <li key={player.id}>
             Username: {player.username}
-            {player.id ===playerIDCookie ? " (you)" : ""}
-            <br />
-            Index: {playerIndex}
+            {player.id === playerId ? " (you)" : ""}
           </li>
         ))}
       </ul>
