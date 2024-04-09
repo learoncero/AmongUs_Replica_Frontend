@@ -45,7 +45,7 @@ export default function Lobby({ game, onChangeSetGame }: Props) {
       }
     );
 
-    stompClient.subscribe("/topic/" + gameCode + "/play", function (message) {
+    stompClient.subscribe("/topic/" + gameCode + "/play", function () {
       navigate("/" + game.gameCode + "/play");
     });
   }, [stompClient, memoizedOnChangeSetGame]);
