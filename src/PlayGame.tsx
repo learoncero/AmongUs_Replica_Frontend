@@ -111,7 +111,7 @@ export function PlayGame({ game, onChangeSetGame }: Props) {
       <MapDisplay map={game.map} playerList={game.players} />
     </div>
   );
-
+/*
   function updatePlayerInList(updatedPlayer: {
     id: number;
     username: string;
@@ -150,4 +150,5 @@ export function PlayGame({ game, onChangeSetGame }: Props) {
         updatedPlayerList[0].position.y
     );
   }
+ */
 }
