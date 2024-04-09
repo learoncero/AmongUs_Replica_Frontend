@@ -15,7 +15,8 @@
     "react-router-dom": "^6.22.3",
     "react-stomp": "^5.1.0",
     "sockjs": "^0.3.24",
-    "sockjs-client": "^1.6.1"
+    "sockjs-client": "^1.6.1",
+    "universal-cookie": "^7.1.4"
   },
   "devDependencies": {
     "@types/react": "^18.2.56",

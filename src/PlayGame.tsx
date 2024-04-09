@@ -30,12 +30,22 @@ export function PlayGame({ game, onChangeSetGame }: Props) {
     }
   }, []);
 
-  function handleKeyDown(event: KeyboardEvent) {
-    const keyCode = event.code;
-    if (stompClient && game.players.length > 0) {
-      stompClient.send("/app/move", {}, keyCode);
+    function handleKeyDown(event: KeyboardEvent) {
+        const keyCode = event.code;
+        const playerIdCookie = document.cookie.split(";").find(cookie => cookie.trim().startsWith("playerId="));
+        if (playerIdCookie) {
+            const playerId = playerIdCookie.split("=")[1];
+            // Send move message to server
+            const moveMessage = {
+                id: playerId,
+                keyCode: keyCode,
+                gameCode: game.gameCode,
+            };
+            if (stompClient && game.players.length > 0 && playerId) {
+                stompClient.send("/app/move", {}, JSON.stringify(moveMessage));
+            }
+        }
     }
-  }
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
@@ -44,15 +54,18 @@ export function PlayGame({ game, onChangeSetGame }: Props) {
     };
   }, [stompClient, game.players]);
 
-  useEffect(() => {
-    if (stompClient) {
-      stompClient.subscribe(
-        "/topic/positionChange",
-        (message: { body: string }) => {
-          const receivedMessage = JSON.parse(message.body);
-          console.log("Received message: ", receivedMessage);
-          updatePlayerInList(receivedMessage);
+    useEffect(() => {
+        if (stompClient) {
+            stompClient.subscribe(
+                "/topic/positionChange",
+                (message: { body: string }) => {
+                    const receivedMessage = JSON.parse(message.body);
+                    console.log("Received message: ", receivedMessage);
+                    onChangeSetGame(receivedMessage);
+                }
+            );
         }
+
       );
 
       // Subscribe to receive updated game state
@@ -67,6 +80,7 @@ export function PlayGame({ game, onChangeSetGame }: Props) {
     }
   }, [stompClient]);
   /*
+
     useEffect(() => {
         console.log(
             "UseEffect for game.players at index[0]: " +
@@ -108,7 +122,7 @@ export function PlayGame({ game, onChangeSetGame }: Props) {
       <MapDisplay map={game.map} playerList={game.players} />
     </div>
   );
-
+/*
   function updatePlayerInList(updatedPlayer: {
     id: number;
     username: string;
@@ -148,4 +162,5 @@ export function PlayGame({ game, onChangeSetGame }: Props) {
         updatedPlayerList[0].position.y
     );
   }
+ */
 }
