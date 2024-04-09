@@ -26,17 +26,21 @@ export function PlayGame ({game, onChangeSetGame}:Props) {
                 }
             };
         }
-    }, []);
+    }, [stompClient]);
 
     function handleKeyDown(event: KeyboardEvent) {
         const keyCode = event.code;
-        // Retrieve player ID from cookie
         const playerIdCookie = document.cookie.split(";").find(cookie => cookie.trim().startsWith("playerId="));
         if (playerIdCookie) {
-            const playerId = parseInt(playerIdCookie.split("=")[1]);
+            const playerId = playerIdCookie.split("=")[1];
+            // Send move message to server
+            const moveMessage = {
+                id: playerId,
+                keyCode: keyCode,
+                gameCode: game.gameCode,
+            };
             if (stompClient && game.players.length > 0 && playerId) {
-                // Send move request with player ID and keyCode as JSON object
-                stompClient.send("/app/move", {}, JSON.stringify({ keyCode, playerId }));
+                stompClient.send("/app/move", {}, JSON.stringify(moveMessage));
             }
         }
     }
@@ -55,7 +59,7 @@ export function PlayGame ({game, onChangeSetGame}:Props) {
                 (message: { body: string }) => {
                     const receivedMessage = JSON.parse(message.body);
                     console.log("Received message: ", receivedMessage);
-                    updatePlayerInList(receivedMessage);
+                    onChangeSetGame(receivedMessage);
                 }
             );
         }
@@ -100,15 +104,8 @@ export function PlayGame ({game, onChangeSetGame}:Props) {
             <MapDisplay map={game.map} playerList={game.players} />
         </div>
     )
-
-    function updatePlayerInList(updatedPlayer: {
-        id: number;
-        username: string;
-        position: {
-            x: number;
-            y: number;
-        }
-    }) {
+/*
+    function updatePlayerInList(updatedPlayer: Player) {
         const updatedGame = {...game};
         const updatedPlayerList = [...game.players];
         const updatedPlayerIndex = updatedPlayerList.findIndex(
@@ -123,6 +120,7 @@ export function PlayGame ({game, onChangeSetGame}:Props) {
 
         console.log("Before setPlayerList:", game.players);
         onChangeSetGame(updatedGame);
-        console.log("UpdatedPlayerList at index[0]: "+updatedPlayerList[0].username+" at position: "+updatedPlayerList[0].position.x+", "+updatedPlayerList[0].position.y)
+        console.log("UpdatedPlayerList at updatedPlayerListIndex: "+updatedPlayerList[updatedPlayerIndex].username+" at position: "+updatedPlayerList[updatedPlayerIndex].position.x+", "+updatedPlayerList[updatedPlayerIndex].position.y)
     }
+ */
 }
