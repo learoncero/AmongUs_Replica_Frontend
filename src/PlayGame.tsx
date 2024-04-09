@@ -75,32 +75,10 @@ export function PlayGame({ game, onChangeSetGame }: Props) {
         stompClient.send(`/app/${game.gameCode}/play`, {}, JSON.stringify(game));
     }
   }, [stompClient]);
-  /*
 
-    useEffect(() => {
-        console.log(
-            "UseEffect for game.players at index[0]: " +
-            game.players[0].username +
-            " at position: " +
-            game.players[0].position.x +
-            ", " +
-            game.players[0].position.y
-        );
-    }, [game]);
-
-    console.log("PlayGame rendered");
-    console.log(
-        "Game in PlayGame after rendering: GameCode: " +
-        game.gameCode +
-        "Player1 username: " +
-        game.players.at(0).username +
-        "Position X, Y: " +
-        game.players.at(0).position.x +
-        ", " +
-        game.players.at(0).position.y
-    );
-*/
-  //console.log("Map in PlayGame Game Component: "+game.map);
+  const playerIDCookie = parseInt(document.cookie.split(";").find(cookie => cookie.trim().startsWith("playerId=")));
+  console.log(playerIDCookie);
+  const playerIndex = game.players.findIndex(player => player.id === playerIDCookie);
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -108,55 +86,17 @@ export function PlayGame({ game, onChangeSetGame }: Props) {
       <ul>
         {game.players.map((player) => (
           <li key={player.id}>
-            {player.username}
-            {player.id === 1 ? " (you)" : ""}
+            Username: {player.username}
+            {player.id ===playerIDCookie ? " (you)" : ""}
+            <br />
+            Index: {playerIndex}
           </li>
         ))}
       </ul>
         {/*TODO: implement ID search with Cookies*/}
-      {game.players.at(0).role === "Impostor" ? <ImpostorView sabotages={game.sabotages}/> : <CrewmateView />  }
+      {game.players.at(playerIndex).role === "Impostor" ? <ImpostorView sabotages={game.sabotages}/> : <CrewmateView />  }
       <MapDisplay map={game.map} playerList={game.players} />
     </div>
   );
-/*
-  function updatePlayerInList(updatedPlayer: {
-    id: number;
-    username: string;
-    position: {
-      x: number;
-      y: number;
-    }
-    role: string;
-  }) {
-    const updatedGame = { ...game };
-    const updatedPlayerList = [...game.players];
-    const updatedPlayerIndex = updatedPlayerList.findIndex(
-      (player) => player.id === updatedPlayer.id
-    );
-    console.log(
-      "Updated player: " +
-        updatedPlayer.username +
-        " at position: " +
-        updatedPlayer.position.x +
-        ", " +
-        updatedPlayer.position.y
-    );
-    console.log("Updated player index: " + updatedPlayerIndex);
-    if (updatedPlayerIndex !== -1) {
-      updatedPlayerList[updatedPlayerIndex] = updatedPlayer;
-    }
-    updatedGame.players = updatedPlayerList;
 
-    console.log("Before setPlayerList:", game.players);
-    onChangeSetGame(updatedGame);
-    console.log(
-      "UpdatedPlayerList at index[0]: " +
-        updatedPlayerList[0].username +
-        " at position: " +
-        updatedPlayerList[0].position.x +
-        ", " +
-        updatedPlayerList[0].position.y
-    );
-  }
- */
 }
