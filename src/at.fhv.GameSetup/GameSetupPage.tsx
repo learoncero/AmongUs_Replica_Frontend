@@ -66,7 +66,7 @@ export default function GameSetupPage({
         const playerId = game?.players[0]?.id;
         if (playerId) {
           // Store player ID in a cookie
-          document.cookie = `playerId=${playerId}; path=/`;
+          sessionStorage.setItem('playerId', playerId); //TODO: Change to cookie
           console.log("Player ID stored in cookie:", playerId);
         }
       })

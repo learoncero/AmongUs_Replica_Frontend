@@ -34,6 +34,7 @@ export default function JoinGame() {
   const isJoinDisabled = !(playerName && gameCode);
 
   const handleJoinGame = () => {
+    const uuid = sessionStorage.getItem('uuid'); //TODO: Change to cookie
     if (!isJoinDisabled && stompClient) {
       const data = {
         username: playerName,
@@ -42,9 +43,10 @@ export default function JoinGame() {
           y: 9,
         },
         gameCode: gameCode,
+        uuid: uuid,
       };
 
-      stompClient.send("/app/joinGame", {}, JSON.stringify(data));
+      stompClient.send(`/app/joinGame/${uuid}`, {}, JSON.stringify(data));
 
       // Redirect to lobby
       navigate(`/lobby/${gameCode}`);
@@ -58,21 +60,28 @@ export default function JoinGame() {
     console.log("Player ID received:", playerId);
     if (playerId) {
       // Store player ID in a cookie
-      document.cookie = `playerId=${playerId}; path=/`;
+      sessionStorage.setItem('playerId', playerId); //TODO: Change to cookie
       console.log("Player ID stored in cookie:", playerId);
     }
   };
 
   useEffect(() => {
+    const uuid = sessionStorage.getItem('uuid'); //TODO: Change to cookie
     if (stompClient) {
       stompClient.subscribe(
-          "/topic/playerJoined",
+          `/topic/playerJoined/${uuid}`,
           (message ) => {
             console.log("Received message: ", message);
             handleJoinGameResponse(message);
           }
       );
     }
+
+    return () => {
+      if (stompClient) {
+        stompClient.unsubscribe();
+      }
+    };
   }, [stompClient]);
 
   return (

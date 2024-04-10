@@ -30,22 +30,21 @@ export function PlayGame({ game, onChangeSetGame }: Props) {
     }
   }, []);
 
-  function handleKeyDown(event: KeyboardEvent) {
-    const keyCode = event.code;
-    const playerIdCookie = document.cookie.split(";").find(cookie => cookie.trim().startsWith("playerId="));
-    if (playerIdCookie) {
-      const playerId = playerIdCookie.split("=")[1];
-      // Send move message to server
-      const moveMessage = {
-        id: playerId,
-        keyCode: keyCode,
-        gameCode: game.gameCode,
-      };
-      if (stompClient && game.players.length > 0 && playerId) {
-        stompClient.send("/app/move", {}, JSON.stringify(moveMessage));
-      }
+    function handleKeyDown(event: KeyboardEvent) {
+        const keyCode = event.code;
+        const playerId = sessionStorage.getItem('playerId'); //TODO: Change to cookie
+        if (playerId) {
+            // Send move message to server
+            const moveMessage = {
+                id: playerId,
+                keyCode: keyCode,
+                gameCode: game.gameCode,
+            };
+            if (stompClient && game.players.length > 0 && playerId) {
+                stompClient.send("/app/move", {}, JSON.stringify(moveMessage));
+            }
+        }
     }
-  }
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
@@ -75,7 +74,7 @@ export function PlayGame({ game, onChangeSetGame }: Props) {
         stompClient.send(`/app/${game.gameCode}/play`, {}, JSON.stringify(game));
     }
   }, [stompClient]);
-
+/*
   console.log("Cookie: ", document.cookie);
     const playerIdCookie = document.cookie
         .split(";")
@@ -84,6 +83,10 @@ export function PlayGame({ game, onChangeSetGame }: Props) {
   console.log(playerIdCookie);
   const playerId = playerIdCookie ? parseInt(playerIdCookie.split("=")[1]) : null;
   const playerIndex = game.players.findIndex((player) => player.id === playerId);
+*/
+
+    const playerId = parseInt(sessionStorage.getItem('playerId')); //TODO: Change to cookie
+    const playerIndex = game.players.findIndex((player) => player.id === playerId);
 
   return (
     <div className="min-h-screen bg-black text-white">
