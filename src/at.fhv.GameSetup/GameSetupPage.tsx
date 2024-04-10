@@ -63,6 +63,12 @@ export default function GameSetupPage({
         onChangeSetGame(game);
         console.log("Game created, response from backend:", game);
         navigate(`/lobby/${game.gameCode}`);
+        const playerId = game?.players[0]?.id;
+        if (playerId) {
+          // Store player ID in a cookie
+          document.cookie = `playerId=${playerId}; path=/`;
+          console.log("Player ID stored in cookie:", playerId);
+        }
       })
       .catch((error) => {
         console.error("Error creating game:", error);

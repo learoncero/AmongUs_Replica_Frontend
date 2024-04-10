@@ -32,8 +32,18 @@ export function PlayGame({ game, onChangeSetGame }: Props) {
 
   function handleKeyDown(event: KeyboardEvent) {
     const keyCode = event.code;
-    if (stompClient && game.players.length > 0) {
-      stompClient.send("/app/move", {}, keyCode);
+    const playerIdCookie = document.cookie.split(";").find(cookie => cookie.trim().startsWith("playerId="));
+    if (playerIdCookie) {
+      const playerId = playerIdCookie.split("=")[1];
+      // Send move message to server
+      const moveMessage = {
+        id: playerId,
+        keyCode: keyCode,
+        gameCode: game.gameCode,
+      };
+      if (stompClient && game.players.length > 0 && playerId) {
+        stompClient.send("/app/move", {}, JSON.stringify(moveMessage));
+      }
     }
   }
 
@@ -46,44 +56,34 @@ export function PlayGame({ game, onChangeSetGame }: Props) {
 
   useEffect(() => {
     if (stompClient) {
-      stompClient.subscribe(
-        "/topic/positionChange",
-        (message: { body: string }) => {
-          const receivedMessage = JSON.parse(message.body);
-          console.log("Received message: ", receivedMessage);
-          updatePlayerInList(receivedMessage);
-        }
-      );
+        stompClient.subscribe(
+            "/topic/positionChange",
+            (message: { body: string }) => {
+                const receivedMessage = JSON.parse(message.body);
+                console.log("Received message: ", receivedMessage);
+                onChangeSetGame(receivedMessage);
+            }
+        );
+        // Subscribe to receive updated game state
+        stompClient.subscribe(`/topic/${game.gameCode}/play`, (message: { body: string }) => {
+            console.log("Game Message from Subscription to endpoint gamecode/play: " + message.body);
+            const updatedGame = JSON.parse(message.body);
+            onChangeSetGame(updatedGame);
+        });
+        //send game to backend to be updated
+        console.log("sending game to backend...");
+        stompClient.send(`/app/${game.gameCode}/play`, {}, JSON.stringify(game));
     }
   }, [stompClient]);
-  /*
-    useEffect(() => {
-        console.log(
-            "UseEffect for game.players at index[0]: " +
-            game.players[0].username +
-            " at position: " +
-            game.players[0].position.x +
-            ", " +
-            game.players[0].position.y
-        );
-    }, [game]);
 
-    console.log("PlayGame rendered");
-    console.log(
-        "Game in PlayGame after rendering: GameCode: " +
-        game.gameCode +
-        "Player1 username: " +
-        game.players.at(0).username +
-        "Position X, Y: " +
-        game.players.at(0).position.x +
-        ", " +
-        game.players.at(0).position.y
-    );
-*/
-  //console.log("Map in PlayGame Game Component: "+game.map);
-
-  // TODO: Implement role assignment
-  const role = "Impostor";
+  console.log("Cookie: ", document.cookie);
+    const playerIdCookie = document.cookie
+        .split(";")
+        .map(cookie => cookie.trim())
+        .find(cookie => cookie.startsWith("playerId="));
+  console.log(playerIdCookie);
+  const playerId = playerIdCookie ? parseInt(playerIdCookie.split("=")[1]) : null;
+  const playerIndex = game.players.findIndex((player) => player.id === playerId);
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -91,53 +91,15 @@ export function PlayGame({ game, onChangeSetGame }: Props) {
       <ul>
         {game.players.map((player) => (
           <li key={player.id}>
-            {player.username}
-            {player.id === 1 ? " (you)" : ""}
+            Username: {player.username}
+            {player.id === playerId ? " (you)" : ""}
           </li>
         ))}
       </ul>
-      {role === "Impostor" && <ImpostorView sabotages={game.sabotages} />}
-      {role === "Crewmate" && <CrewmateView />}
+        {/*TODO: implement ID search with Cookies*/}
+      {game.players.at(playerIndex).role === "Impostor" ? <ImpostorView sabotages={game.sabotages}/> : <CrewmateView />  }
       <MapDisplay map={game.map} playerList={game.players} />
     </div>
   );
 
-  function updatePlayerInList(updatedPlayer: {
-    id: number;
-    username: string;
-    position: {
-      x: number;
-      y: number;
-    };
-  }) {
-    const updatedGame = { ...game };
-    const updatedPlayerList = [...game.players];
-    const updatedPlayerIndex = updatedPlayerList.findIndex(
-      (player) => player.id === updatedPlayer.id
-    );
-    console.log(
-      "Updated player: " +
-        updatedPlayer.username +
-        " at position: " +
-        updatedPlayer.position.x +
-        ", " +
-        updatedPlayer.position.y
-    );
-    console.log("Updated player index: " + updatedPlayerIndex);
-    if (updatedPlayerIndex !== -1) {
-      updatedPlayerList[updatedPlayerIndex] = updatedPlayer;
-    }
-    updatedGame.players = updatedPlayerList;
-
-    console.log("Before setPlayerList:", game.players);
-    onChangeSetGame(updatedGame);
-    console.log(
-      "UpdatedPlayerList at index[0]: " +
-        updatedPlayerList[0].username +
-        " at position: " +
-        updatedPlayerList[0].position.x +
-        ", " +
-        updatedPlayerList[0].position.y
-    );
-  }
 }
