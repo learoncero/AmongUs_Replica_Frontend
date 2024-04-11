@@ -56,7 +56,14 @@ export default function JoinGame() {
     const data = JSON.parse(message.body);
     const playerId = data.headers.playerId[0];
     console.log("Player ID received:", playerId);
+
+    // Options
+    // - Make sure playerId is only received by the joining player
+    // - Join via REST endpoint, only handle players in lobby via websockets
+    // - In lobby, call router.refresh() every 2s and not use web sockets
+
     if (playerId) {
+      // Problem: Last joined player overrides all player ids
       // Store player ID in a cookie
       document.cookie = `playerId=${playerId}; path=/`;
       console.log("Player ID stored in cookie:", playerId);
