@@ -16,7 +16,7 @@ export default function MapDisplay({ map, playerList }: Props) {
     const halfViewport = Math.floor(viewportSize / 2);
 
     // Which player to focus
-    const currentPlayer = playerList.find(player => player.id === 1);
+    const currentPlayer = playerList.find(player => player.id );
     if (!currentPlayer) {
         return <div>Player not found.</div>;
     }
