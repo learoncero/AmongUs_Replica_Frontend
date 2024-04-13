@@ -3,14 +3,25 @@ import Stomp from "stompjs";
 import MapDisplay from "./MapDisplay";
 import {useEffect, useState} from "react";
 import SockJS from "sockjs-client";
+import MapButton from "./MapButton";
+import MiniMap from "./MiniMap";
+import './MiniMap.css';
+import TasksList from './TaskList';
 
 type Props = {
-    game: Game;
-    onChangeSetGame(game: Game) : void;
+    game: Game,
+    onChangeSetGame(game: Game): void,
+    GameMap: unknown,
+    playerList: unknown
 };
 
-export function PlayGame ({game, onChangeSetGame}:Props) {
+export function PlayGame ({ game, onChangeSetGame }:Props) {
     const [stompClient, setStompClient] = useState(null);
+    const [showMiniMap, setShowMiniMap] = useState(false);
+
+    const handleToggleMiniMap = () => {
+        setShowMiniMap(!showMiniMap);
+    };
 
     useEffect(() => {
         if (!stompClient) {
@@ -54,6 +65,20 @@ export function PlayGame ({game, onChangeSetGame}:Props) {
             );
         }
     }, [stompClient]);
+
+    useEffect(() => {
+        const toggleMiniMap = (event: KeyboardEvent) => {
+            if (event.key === 'm' || event.key === 'M') {
+                setShowMiniMap(!showMiniMap);
+            }
+        };
+
+        window.addEventListener('keydown', toggleMiniMap);
+
+        return () => {
+            window.removeEventListener('keydown', toggleMiniMap);
+        };
+    }, [showMiniMap]);
 /*
     useEffect(() => {
         console.log(
@@ -90,7 +115,18 @@ export function PlayGame ({game, onChangeSetGame}:Props) {
                     </li>
                 ))}
             </ul>
+            <div>
+                <MapButton onClick={handleToggleMiniMap} label="Show MiniMap" />
+                {showMiniMap && (
+                    <div className="MiniMap-overlay" onClick={() => setShowMiniMap(false)}>
+                        <TasksList />
+                        <div className="MiniMap-content" onClick={e => e.stopPropagation()}>
+                            <MiniMap map={game.map} playerList={game.players} closeMiniMap={() => setShowMiniMap(false)}  />
 
+                        </div>
+                    </div>
+                )}
+            </div>
             <MapDisplay map={game.map} playerList={game.players} />
         </div>
     )
